@@ -160,7 +160,10 @@ body{display:flex;flex-direction:column}
 
 @media print{
   .tabs,.hdr{display:none!important
-  .print-hide{display:none!important}
+  .print-hide{display:none!important
+  #pScope{display:none!important}
+  #pExp{display:none!important}
+}
 }
   html,body{display:block;height:auto;overflow:visible}
   .pane{display:block!important;overflow:visible;padding:0}
@@ -875,34 +878,45 @@ function emailScope() {
 
 
 function smartPrint(){
-  // Mark section headers and their following job cards that have no selected jobs
+  if(Object.keys(jobs).length === 0){
+    alert('No jobs selected. Please select jobs on the Scope tab first.');
+    return;
+  }
+  // Always render and switch to Summary pane before printing
+  // so only checked jobs are visible — never the full scope list
+  renderSum();
+  goTab('Sum');
+
+  // Mark section groups that have no selected jobs as hidden
   document.querySelectorAll('[data-sec-label]').forEach(function(el){
     el.classList.remove('print-hide');
   });
   document.querySelectorAll('.job-card').forEach(function(el){
     el.classList.remove('print-hide');
   });
-  // Sections with jobs
   var activeSecs = {};
   Object.keys(jobs).forEach(function(k){ activeSecs[jobs[k].section]=true; });
-  // Hide sec-ttl and their job cards if section has no jobs
-  var allLabels = document.querySelectorAll('[data-sec-label]');
-  allLabels.forEach(function(lbl){
+  document.querySelectorAll('[data-sec-label]').forEach(function(lbl){
     var sec = lbl.getAttribute('data-section');
-    if(!activeSecs[sec]){
+    if(sec && !activeSecs[sec]){
       lbl.classList.add('print-hide');
-      // Hide all job cards that follow until next sec-ttl
       var next = lbl.nextElementSibling;
       while(next && !next.getAttribute('data-sec-label')){
-        if(next.classList.contains('job-card')) next.classList.add('print-hide');
+        next.classList.add('print-hide');
         next = next.nextElementSibling;
       }
     }
   });
-  window.print();
+
+  // Small delay to let DOM settle after tab switch, then print
   setTimeout(function(){
-    document.querySelectorAll('.print-hide').forEach(function(el){ el.classList.remove('print-hide'); });
-  }, 2000);
+    window.print();
+    setTimeout(function(){
+      document.querySelectorAll('.print-hide').forEach(function(el){
+        el.classList.remove('print-hide');
+      });
+    }, 2000);
+  }, 100);
 }
 
 try { document.getElementById('xDate').value=new Date().toISOString().slice(0,10); } catch(e){}
