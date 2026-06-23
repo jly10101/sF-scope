@@ -444,7 +444,8 @@ function renderSum(){
   document.querySelectorAll('.job-card.open').forEach(function(card){
     if(card.id) openCards[card.id] = true;
   });
-  var scrollTop = document.getElementById('content').scrollTop;
+  var sumPane = document.getElementById('pSum');
+  var scrollTop = sumPane ? sumPane.scrollTop : 0;
 
   var el = document.getElementById('sumContent');
   el.innerHTML = '';
@@ -605,7 +606,7 @@ function renderSum(){
     var card = document.getElementById(id);
     if(card) card.classList.add('open');
   });
-  document.getElementById('content').scrollTop = scrollTop;
+  if(sumPane) sumPane.scrollTop = scrollTop;
 }
 
 // ── Export tab ────────────────────────────────────────────────────────────────
