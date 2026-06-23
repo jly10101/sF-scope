@@ -159,17 +159,46 @@ body{display:flex;flex-direction:column}
 .share-email{background:#34c759;color:#fff}
 
 @media print{
-  .tabs,.hdr{display:none!important
-  .print-hide{display:none!important
-  #pScope{display:none!important}
-  #pExp{display:none!important}
+  /* Hide everything except the dedicated print container */
+  body > *{ display:none!important }
+  #printView{ display:block!important }
+  #printView{
+    font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;
+    font-size:11pt;
+    color:#000;
+    background:#fff;
+    padding:0.4in;
+  }
+  .pv-header{ margin-bottom:18pt; border-bottom:2pt solid #000; padding-bottom:10pt }
+  .pv-co{ font-size:8pt; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#555 }
+  .pv-title{ font-size:18pt; font-weight:700; margin:4pt 0 2pt }
+  .pv-meta{ font-size:9pt; color:#444 }
+  .pv-totals{ display:flex; gap:24pt; margin-bottom:16pt; padding:8pt 10pt; border:1pt solid #ccc; background:#f8f8f8 }
+  .pv-total-item{ flex:1 }
+  .pv-total-lbl{ font-size:7pt; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#777 }
+  .pv-total-val{ font-size:14pt; font-weight:700; margin-top:2pt }
+  .pv-blue{ color:#1a56a0 }
+  .pv-amber{ color:#8a5c00 }
+  .pv-green{ color:#1a6b3a }
+  .pv-section{ font-size:8pt; font-weight:700; text-transform:uppercase; letter-spacing:.07em;
+    color:#fff; background:#2d3748; padding:4pt 8pt; margin:14pt 0 0; page-break-after:avoid }
+  .pv-job{ border:1pt solid #ddd; margin:4pt 0; page-break-inside:avoid }
+  .pv-job-hdr{ display:flex; justify-content:space-between; align-items:flex-start;
+    padding:6pt 8pt; border-bottom:1pt solid #eee; background:#fafafa }
+  .pv-job-name{ font-size:10pt; font-weight:700 }
+  .pv-job-room{ font-size:8pt; color:#666; margin-top:1pt }
+  .pv-job-costs{ text-align:right; flex-shrink:0; margin-left:12pt }
+  .pv-job-total{ font-size:10pt; font-weight:700; color:#1a56a0 }
+  .pv-job-sub{ font-size:8pt; color:#666; margin-top:1pt }
+  .pv-job-body{ padding:6pt 8pt }
+  .pv-mats-lbl{ font-size:7.5pt; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#777; margin-bottom:3pt }
+  .pv-mat{ font-size:8.5pt; color:#333; padding:1pt 0 1pt 10pt; position:relative }
+  .pv-mat::before{ content:'•'; position:absolute; left:2pt; color:#c8542a }
+  .pv-footer{ margin-top:20pt; padding-top:8pt; border-top:1pt solid #ccc;
+    font-size:8pt; color:#888; text-align:center }
 }
-}
-  html,body{display:block;height:auto;overflow:visible}
-  .pane{display:block!important;overflow:visible;padding:0}
-  .job-body{display:block!important}
-  .mat-edit-wrap,.photo-btns,.photo-rm{display:none!important}
-  .finput,.notes-ta{border:none;background:transparent}
+@media screen{
+  #printView{ display:none }
 }
 ::-webkit-scrollbar{display:none}
 </style>
@@ -878,45 +907,101 @@ function emailScope() {
 
 
 function smartPrint(){
-  if(Object.keys(jobs).length === 0){
-    alert('No jobs selected. Please select jobs on the Scope tab first.');
+  var keys = Object.keys(jobs);
+  if(keys.length === 0){
+    alert('No jobs selected. Check off jobs on the Scope tab first.');
     return;
   }
-  // Always render and switch to Summary pane before printing
-  // so only checked jobs are visible — never the full scope list
-  renderSum();
-  goTab('Sum');
 
-  // Mark section groups that have no selected jobs as hidden
-  document.querySelectorAll('[data-sec-label]').forEach(function(el){
-    el.classList.remove('print-hide');
+  // ── Build totals ─────────────────────────────────────────────────────────
+  var tM=0, tH=0;
+  keys.forEach(function(k){ var j=jobs[k]; tM+=effM(j)*j.qty; tH+=effH(j)*j.qty; });
+  var tL=tH*RATE, tC=tM+tL;
+
+  // ── Group by section ──────────────────────────────────────────────────────
+  var bySec={};
+  keys.forEach(function(k){
+    var j=jobs[k];
+    if(!bySec[j.section]) bySec[j.section]=[];
+    bySec[j.section].push(k);
   });
-  document.querySelectorAll('.job-card').forEach(function(el){
-    el.classList.remove('print-hide');
-  });
-  var activeSecs = {};
-  Object.keys(jobs).forEach(function(k){ activeSecs[jobs[k].section]=true; });
-  document.querySelectorAll('[data-sec-label]').forEach(function(lbl){
-    var sec = lbl.getAttribute('data-section');
-    if(sec && !activeSecs[sec]){
-      lbl.classList.add('print-hide');
-      var next = lbl.nextElementSibling;
-      while(next && !next.getAttribute('data-sec-label')){
-        next.classList.add('print-hide');
-        next = next.nextElementSibling;
+
+  // ── Property / date info ──────────────────────────────────────────────────
+  var addr = document.getElementById('xAddr').value ||
+             (activeScope ? (activeScope.addr||activeScope.name) : '') || '';
+  var prep = document.getElementById('xPrep').value || '';
+  var date = document.getElementById('xDate').value || new Date().toISOString().slice(0,10);
+
+  // ── Build HTML ────────────────────────────────────────────────────────────
+  var html = '';
+
+  // Header
+  html += '<div class="pv-header">';
+  html += '<div class="pv-co">Stone Fortress Staffing, LLC &nbsp;\u00B7&nbsp; Rental Turn Scope</div>';
+  html += '<div class="pv-title">' + (addr || 'Scope Summary') + '</div>';
+  html += '<div class="pv-meta">';
+  if(prep) html += 'Prepared by: ' + prep + '&nbsp;&nbsp;';
+  html += 'Date: ' + date;
+  html += '&nbsp;&nbsp;&nbsp;Labor rate: $' + RATE + '/hr';
+  html += '</div>';
+  html += '</div>';
+
+  // Totals bar
+  html += '<div class="pv-totals">';
+  html += '<div class="pv-total-item"><div class="pv-total-lbl">Total Budget</div><div class="pv-total-val pv-blue">' + fmt$(tC) + '</div></div>';
+  html += '<div class="pv-total-item"><div class="pv-total-lbl">Materials</div><div class="pv-total-val pv-amber">' + fmt$(tM) + '</div></div>';
+  html += '<div class="pv-total-item"><div class="pv-total-lbl">Labor (' + tH.toFixed(2) + 'h)</div><div class="pv-total-val pv-green">' + fmt$(tL) + '</div></div>';
+  html += '<div class="pv-total-item"><div class="pv-total-lbl">Jobs Selected</div><div class="pv-total-val">' + keys.length + '</div></div>';
+  html += '</div>';
+
+  // Jobs by section
+  Object.keys(bySec).forEach(function(sec){
+    html += '<div class="pv-section">' + sec + '</div>';
+
+    bySec[sec].forEach(function(key){
+      var j = jobs[key];
+      var h = effH(j)*j.qty;
+      var m = effM(j)*j.qty;
+      var l = h*RATE;
+      var tot = m+l;
+      var mtype = QT[nk(j.task)];
+      var qtyStr = mtype
+        ? ((j.meas||0) + (mtype==='sqft' ? ' sq ft' : ' ln ft'))
+        : ('x' + j.qty);
+
+      html += '<div class="pv-job">';
+
+      // Job header row
+      html += '<div class="pv-job-hdr">';
+      html += '<div><div class="pv-job-name">' + j.task + '</div>';
+      html += '<div class="pv-job-room">' + sec + ' &nbsp;\u00B7&nbsp; ' + qtyStr + '</div></div>';
+      html += '<div class="pv-job-costs">';
+      html += '<div class="pv-job-total">' + fmt$(tot) + '</div>';
+      html += '<div class="pv-job-sub">' + h.toFixed(2) + 'h labor &nbsp;\u00B7&nbsp; ' + fmt$(m) + ' mat</div>';
+      html += '</div>';
+      html += '</div>';
+
+      // Materials list
+      var mats = effMats(j);
+      if(mats && mats.length > 0){
+        html += '<div class="pv-job-body">';
+        html += '<div class="pv-mats-lbl">Materials</div>';
+        mats.forEach(function(mat){
+          html += '<div class="pv-mat">' + mat + '</div>';
+        });
+        html += '</div>';
       }
-    }
+
+      html += '</div>'; // end pv-job
+    });
   });
 
-  // Small delay to let DOM settle after tab switch, then print
-  setTimeout(function(){
-    window.print();
-    setTimeout(function(){
-      document.querySelectorAll('.print-hide').forEach(function(el){
-        el.classList.remove('print-hide');
-      });
-    }, 2000);
-  }, 100);
+  // Footer
+  html += '<div class="pv-footer">Stone Fortress Staffing, LLC &nbsp;\u00B7&nbsp; Rental Turn Scope Creator v8 &nbsp;\u00B7&nbsp; Confidential \u2014 Internal Use Only</div>';
+
+  // ── Inject and print ──────────────────────────────────────────────────────
+  document.getElementById('printView').innerHTML = html;
+  setTimeout(function(){ window.print(); }, 100);
 }
 
 try { document.getElementById('xDate').value=new Date().toISOString().slice(0,10); } catch(e){}
@@ -956,5 +1041,6 @@ document.getElementById('propModal').addEventListener('click', function(e) {
   </div>
 </div>
 
+<div id="printView"></div>
 </body>
 </html>
