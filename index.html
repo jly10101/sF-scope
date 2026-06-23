@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SF Scope Creator v3</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--accent:#c8542a;--steel:#2d3748;--bg:#f7f8fa;--white:#fff;--border:#e2e8f0;--muted:#718096;--slate:#4a5568;--ink:#1a1a1a;--blue:#2b6cb0;--amber:#b7791f;--green:#276749}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
+body{display:flex;flex-direction:column}
+
+/* Header */
+.hdr{flex-shrink:0;background:var(--steel);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.hdr h1{font-size:16px;font-weight:700}.hdr h1 em{color:#f6a86a;font-style:normal}
+.hdr-right{display:flex;align-items:center;gap:6px;font-size:12px;color:#a0aec0}
+.hdr-right input{width:46px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:5px;color:#fff;font-size:13px;font-weight:700;padding:3px 5px;text-align:center;outline:none}
+.badge{background:var(--accent);color:#fff;font-size:11px;font-weight:700;border-radius:10px;padding:2px 8px;margin-left:6px}
+
+/* Tab panes */
+.pane{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;display:none;min-height:0}
+.pane.on{display:block}
+
+/* Tab bar */
+.tabs{flex-shrink:0;background:#fff;border-top:1px solid var(--border);display:flex}
+.tab{flex:1;border:none;background:none;padding:10px 4px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tab svg{width:21px;height:21px;stroke-width:1.8;fill:none;stroke:currentColor}
+.tab.on{color:var(--accent)}
+
+/* Search */
+.search-box{display:flex;align-items:center;background:#fff;border:1px solid var(--border);border-radius:10px;padding:0 12px;gap:8px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.search-box input{border:none;background:transparent;font-size:15px;padding:11px 0;width:100%;outline:none;font-family:inherit}
+
+/* Section cards */
+.sec-card{background:#fff;border-radius:10px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.08);overflow:hidden}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none}
+.sec-hdr-left{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:var(--steel)}
+.sec-bdg{background:var(--accent);color:#fff;font-size:11px;font-weight:700;border-radius:9px;padding:1px 7px;display:none}
+.sec-bdg.on{display:inline}
+.chevron{color:var(--muted);font-size:11px;transition:transform .2s}
+.sec-card.open .chevron{transform:rotate(90deg)}
+.sec-body{display:none;border-top:1px solid var(--border)}
+.sec-card.open .sec-body{display:block}
+.room-srch{padding:9px 12px 7px;display:flex;align-items:center;gap:8px;background:#fafbfc;border-bottom:1px solid var(--border)}
+.room-srch input{flex:1;border:1px solid var(--border);border-radius:7px;padding:6px 9px;font-size:13px;outline:none;font-family:inherit;background:#fff}
+.room-srch input:focus{border-color:var(--accent)}
+.no-match{padding:8px 16px;font-size:12px;color:var(--muted);font-style:italic;display:none}
+.task-row{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);gap:12px}
+.task-row:last-child{border-bottom:none}
+.task-row:active{background:#fdf0eb}
+.task-row.sel{background:#fdf0eb}
+.task-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
+.task-row label{font-size:14px;color:var(--slate);flex:1;cursor:pointer;line-height:1.4}
+.task-row.sel label{color:var(--ink);font-weight:600}
+
+/* Summary */
+.sum-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.sum-card{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 2px 6px rgba(0,0,0,.07)}
+.sum-card.full{grid-column:1/-1}
+.sum-lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.sum-val{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums}
+.blue{color:var(--blue)}.amber{color:var(--amber)}.green{color:var(--green)}
+
+/* Job detail cards */
+.job-card{background:#fff;border-radius:10px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.07);overflow:hidden;border-left:4px solid var(--accent)}
+.job-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:13px 15px;cursor:pointer}
+.job-title{font-size:14px;font-weight:700;color:var(--ink)}
+.job-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.job-cost{text-align:right;flex-shrink:0;margin-left:10px}
+.job-total{font-size:14px;font-weight:700;color:var(--blue)}
+.job-cost-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.job-body{display:none;border-top:1px solid var(--border);padding:13px 15px}
+.job-card.open .job-body{display:block}
+
+.frow{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.frow label{font-size:12px;font-weight:600;color:var(--slate)}
+.finput{border:1px solid var(--border);border-radius:7px;padding:6px 9px;font-size:14px;font-family:inherit;width:88px;text-align:right;outline:none;background:#fff}
+.finput:focus{border-color:var(--accent)}
+.finput.ov{border-color:var(--amber);color:var(--amber);font-weight:600}
+.mrow{display:flex;align-items:center;gap:5px}
+.munit{font-size:12px;color:var(--muted)}
+.reset-lnk{font-size:11px;color:var(--amber);text-decoration:underline;cursor:pointer;margin-left:6px}
+.flbl{font-size:12px;font-weight:600;color:var(--slate);margin:10px 0 4px;display:block}
+.notes-ta{width:100%;border:1px solid var(--border);border-radius:7px;padding:9px 11px;font-size:14px;font-family:inherit;resize:none;height:75px;outline:none;color:var(--ink)}
+.notes-ta:focus{border-color:var(--accent)}
+
+/* Photos */
+.photo-grid{display:flex;flex-wrap:wrap;gap:7px;margin:7px 0}
+.photo-thumb{position:relative;width:78px;height:78px;border-radius:7px;overflow:hidden;border:1px solid var(--border)}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-rm{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.photo-btns{display:flex;gap:8px;margin-top:5px}
+.photo-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:9px;border:1.5px dashed var(--border);background:var(--bg);color:var(--slate);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.photo-btn input{display:none}
+
+/* Materials */
+.mat-list{list-style:none;margin:5px 0 9px}
+.mat-list li{font-size:13px;color:var(--slate);padding:2px 0;display:flex;gap:6px}
+.mat-list li::before{content:"·";color:var(--accent);font-weight:700;flex-shrink:0}
+.mat-edit-wrap{display:none;background:var(--bg);border-radius:7px;padding:9px;margin-top:5px}
+.mat-edit-wrap.on{display:block}
+.mat-ta{width:100%;border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;font-family:inherit;resize:none;height:88px;outline:none;color:var(--ink)}
+.mat-ta:focus{border-color:var(--accent)}
+.mat-acts{display:flex;gap:7px;margin-top:7px}
+.btn-sv{background:var(--accent);color:#fff;border:none;border-radius:7px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-cn{background:var(--border);color:var(--slate);border:none;border-radius:7px;padding:7px 13px;font-size:13px;cursor:pointer;font-family:inherit}
+.btn-rs{background:none;color:var(--amber);border:none;font-size:11px;cursor:pointer;font-family:inherit;text-decoration:underline;margin-left:auto;padding:0}
+
+/* Export */
+.prop-form{background:#fff;border-radius:10px;padding:15px;box-shadow:0 2px 6px rgba(0,0,0,.07);margin-bottom:12px}
+.pf{margin-bottom:13px}
+.pf label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:4px}
+.pf input,.pf textarea{width:100%;border:1px solid var(--border);border-radius:7px;padding:10px 12px;font-size:15px;font-family:inherit;outline:none;color:var(--ink);background:#fff}
+.pf input:focus,.pf textarea:focus{border-color:var(--accent)}
+.exp-btn{width:100%;padding:15px;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:11px}
+.exp-print{background:var(--steel);color:#fff}
+.exp-clear{background:#fff5f5;color:#c53030;border:1px solid #fed7d7}
+.sec-ttl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:14px 0 7px;display:flex;align-items:center;gap:8px}
+.sec-ttl::after{content:'';flex:1;height:1px;background:var(--border)}
+
+
+/* ── Property selector modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.on{display:flex}
+.modal{background:var(--wh);border-radius:18px 18px 0 0;width:100%;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 env(safe-area-inset-bottom)}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 12px;border-bottom:1px solid var(--bdr);position:sticky;top:0;background:var(--wh);z-index:1}
+.modal-title{font-size:17px;font-weight:700;color:var(--ink)}
+.modal-close{background:none;border:none;font-size:24px;color:var(--muted);cursor:pointer;padding:0;line-height:1}
+.modal-body{padding:16px}
+.prop-item{display:flex;align-items:center;background:var(--bg);border-radius:10px;padding:13px 14px;margin-bottom:8px;cursor:pointer;border:2px solid transparent;gap:10px}
+.prop-item.active{border-color:var(--acc);background:#fdf0eb}
+.prop-item-info{flex:1;min-width:0}
+.prop-item-name{font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prop-item-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.prop-item-del{background:none;border:none;color:#c53030;font-size:20px;cursor:pointer;padding:0 0 0 8px;flex-shrink:0;line-height:1}
+.new-prop-form{background:var(--bg);border-radius:10px;padding:14px;margin-top:4px}
+.new-prop-form input{width:100%;border:1px solid var(--bdr);border-radius:7px;padding:10px 12px;font-size:15px;font-family:inherit;outline:none;color:var(--ink);background:var(--wh);margin-bottom:8px}
+.new-prop-form input:focus{border-color:var(--acc)}
+.addr-suggestions{background:var(--wh);border:1px solid var(--bdr);border-radius:7px;margin-top:-4px;margin-bottom:8px;display:none;overflow:hidden}
+.addr-sug-item{padding:10px 12px;font-size:14px;color:var(--ink);cursor:pointer;border-bottom:1px solid var(--bdr)}
+.addr-sug-item:last-child{border-bottom:none}
+.addr-sug-item:active{background:var(--bg)}
+.btn-full{width:100%;padding:12px;border-radius:8px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px}
+.btn-create{background:var(--acc);color:#fff}
+.btn-cancel-sm{background:var(--bg);color:var(--slate);border:1px solid var(--bdr)}
+
+/* ── Header scope name ── */
+.hdr-scope{font-size:11px;color:rgba(255,255,255,.6);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.hdr-scope-btn{display:flex;flex-direction:column;cursor:pointer;min-width:0}
+.hdr-scope-btn:active{opacity:.8}
+
+/* ── Share/Email button in export ── */
+.share-section{background:var(--wh);border-radius:var(--r);padding:15px;box-shadow:var(--shadow);margin-bottom:12px}
+.share-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px;display:block}
+.share-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.share-btn{padding:12px 8px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+.share-native{background:#007aff;color:#fff}
+.share-email{background:#34c759;color:#fff}
+
+@media print{
+  /* Hide everything except the dedicated print container */
+  body > *{ display:none!important }
+  #printView{ display:block!important }
+  #printView{
+    font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;
+    font-size:11pt;
+    color:#000;
+    background:#fff;
+    padding:0.4in;
+  }
+  .pv-header{ margin-bottom:18pt; border-bottom:2pt solid #000; padding-bottom:10pt }
+  .pv-co{ font-size:8pt; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#555 }
+  .pv-title{ font-size:18pt; font-weight:700; margin:4pt 0 2pt }
+  .pv-meta{ font-size:9pt; color:#444 }
+  .pv-totals{ display:flex; gap:24pt; margin-bottom:16pt; padding:8pt 10pt; border:1pt solid #ccc; background:#f8f8f8 }
+  .pv-total-item{ flex:1 }
+  .pv-total-lbl{ font-size:7pt; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#777 }
+  .pv-total-val{ font-size:14pt; font-weight:700; margin-top:2pt }
+  .pv-blue{ color:#1a56a0 }
+  .pv-amber{ color:#8a5c00 }
+  .pv-green{ color:#1a6b3a }
+  .pv-section{ font-size:8pt; font-weight:700; text-transform:uppercase; letter-spacing:.07em;
+    color:#fff; background:#2d3748; padding:4pt 8pt; margin:14pt 0 0; page-break-after:avoid }
+  .pv-job{ border:1pt solid #ddd; margin:4pt 0; page-break-inside:avoid }
+  .pv-job-hdr{ display:flex; justify-content:space-between; align-items:flex-start;
+    padding:6pt 8pt; border-bottom:1pt solid #eee; background:#fafafa }
+  .pv-job-name{ font-size:10pt; font-weight:700 }
+  .pv-job-room{ font-size:8pt; color:#666; margin-top:1pt }
+  .pv-job-costs{ text-align:right; flex-shrink:0; margin-left:12pt }
+  .pv-job-total{ font-size:10pt; font-weight:700; color:#1a56a0 }
+  .pv-job-sub{ font-size:8pt; color:#666; margin-top:1pt }
+  .pv-job-body{ padding:6pt 8pt }
+  .pv-mats-lbl{ font-size:7.5pt; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#777; margin-bottom:3pt }
+  .pv-mat{ font-size:8.5pt; color:#333; padding:1pt 0 1pt 10pt; position:relative }
+  .pv-mat::before{ content:'•'; position:absolute; left:2pt; color:#c8542a }
+  .pv-footer{ margin-top:20pt; padding-top:8pt; border-top:1pt solid #ccc;
+    font-size:8pt; color:#888; text-align:center }
+}
+@media screen{
+  #printView{ display:none }
+}
+::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div onclick="openPropModal()" style="cursor:pointer">
+    <h1>Stone <em>Fortress</em> — Scope <span style="font-size:11px;font-weight:400;opacity:.6">v8</span></h1>
+    <div id="hdrScopeName" style="font-size:11px;color:rgba(255,255,255,.6);margin-top:1px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tap to select property</div>
+  </div>
+  <div class="hdr-right">
+    $<input id="rateIn" type="number" min="1" step="1" value="30" oninput="setRate(this.value)">/hr
+    <span class="badge" id="totalBadge">0</span>
+  </div>
+</div>
+
+<div class="pane on" id="pScope">
+  <div class="search-box">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" placeholder="Search all rooms…" oninput="globalSearch(this.value)">
+  </div>
+  <div id="scopeList"></div>
+</div>
+
+<div class="pane" id="pSum">
+  <div id="sumContent"></div>
+</div>
+
+<div class="pane" id="pExp">
+  <div class="prop-form">
+    <div class="pf"><label>Property Address</label><input type="text" id="xAddr" placeholder="123 Main St"></div>
+    <div class="pf"><label>Prepared By</label><input type="text" id="xPrep" placeholder="Name"></div>
+    <div class="pf"><label>Date</label><input type="date" id="xDate"></div>
+    <div class="pf"><label>Notes</label><textarea id="xNotes" rows="3" placeholder="Additional notes…"></textarea></div>
+  </div>
+  <button class="exp-btn exp-print" onclick="smartPrint()">&#9113; Print / Save PDF</button>
+  <button class="exp-btn exp-clear" onclick="clearAll()">&#128465; Clear All Jobs</button>
+  <div id="expList"></div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" id="tScope" onclick="goTab('Scope')">
+    <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+    Scope
+  </button>
+  <button class="tab" id="tSum" onclick="goTab('Sum')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+    Summary
+  </button>
+  <button class="tab" id="tExp" onclick="goTab('Exp')">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Export
+  </button>
+</div>
+
+<script>
+var RATE = 30;
+var jobs = {}; // key -> {section,task,qty,meas,hrsOv,matsOv,notes,photos}
+
+function setRate(v){ var r=parseFloat(v); if(r>0){ RATE=r; renderSum(); renderExp(); } }
+function jKey(s,t){ return s+'||'+t; }
+function fmt$(n){ return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function goTab(t){
+  var alreadyOn = document.getElementById('p'+t).classList.contains('on');
+  ['Scope','Sum','Exp'].forEach(function(x){
+    document.getElementById('p'+x).classList.remove('on');
+    document.getElementById('t'+x).classList.remove('on');
+  });
+  document.getElementById('p'+t).classList.add('on');
+  document.getElementById('t'+t).classList.add('on');
+  // Only render if switching TO the tab (not already on it)
+  if(t==='Sum' && !alreadyOn) renderSum();
+  if(t==='Exp') renderExp();
+}
+
+// ── Data ──────────────────────────────────────────────────────────────────────
+var QT = {'paint walls':'sqft','paint walls with primer':'sqft','paint ceiling':'sqft','paint ceiling with primer':'sqft','repair superficial wall damage in marked locations':'sqft','repair superficial ceiling damage in marked locations':'sqft','replace flooring with click lock flooring':'sqft','repair existing vinyl plank floor':'sqft','replace base trim':'lnft','replace casing trim':'lnft','paint trim and casing':'lnft','paint trim and casing with primer':'lnft','add/replace attic insulation (blown)':'sqft','add/replace attic insulation (batt)':'sqft','paint exterior siding':'sqft','clean/pressure wash siding':'sqft','replace porch/patio boards':'sqft','replace sidewalk section':'sqft','replace driveway section':'sqft','paint windows':'sqft','paint windows with primer':'sqft','replace transition strips':'lnft','replace bull nose stair transition/protector':'lnft'};
+var MR = {'paint walls':{m:.12,h:.009},'paint walls with primer':{m:.18,h:.012},'paint ceiling':{m:.10,h:.008},'paint ceiling with primer':{m:.15,h:.010},'repair superficial wall damage in marked locations':{m:.25,h:.018},'repair superficial ceiling damage in marked locations':{m:.25,h:.018},'replace flooring with click lock flooring':{m:3.50,h:.040},'repair existing vinyl plank floor':{m:2.00,h:.020},'replace base trim':{m:2.20,h:.050},'replace casing trim':{m:2.00,h:.045},'paint trim and casing':{m:.30,h:.015},'paint trim and casing with primer':{m:.40,h:.020},'add/replace attic insulation (blown)':{m:1.20,h:.012},'add/replace attic insulation (batt)':{m:.90,h:.015},'paint exterior siding':{m:0.2,h:0.012},'clean/pressure wash siding':{m:0.05,h:0.006},'replace porch/patio boards':{m:4.5,h:0.04},'replace sidewalk section':{m:8.0,h:0.06},'replace driveway section':{m:6.0,h:0.05},'paint windows':{m:0.15,h:0.01},'paint windows with primer':{m:0.2,h:0.014},'replace transition strips':{m:3.5,h:0.03},'replace bull nose stair transition/protector':{m:5.0,h:0.04}};
+var BG = {'replace faucet':{m:75,h:1.0},'retighten faucet':{m:0,h:.25},'repair dripping faucet with new cartriges':{m:25,h:.75},'replace strainers':{m:12,h:.5},'caulk with 100% silicone kitchen sink':{m:8,h:.5},'caulk around windowpane':{m:12,h:.5},'replace double bowl sink':{m:180,h:2.5},'replace single bowl sink':{m:120,h:2.0},'reattach sink':{m:5,h:.5},'repair drain piping that is leaking':{m:20,h:.75},'replace drain plumbing':{m:35,h:1.5},'unclog drain':{m:5,h:.5},'repair leaking supply lines':{m:8,h:.5},'replace sink supply lines':{m:15,h:.5},'replace sink 1/4 turn ball valves':{m:20,h:1.0},'caulk with 100% silicone kitchen countertop':{m:8,h:.5},'reattach countertop':{m:10,h:.5},'replace kitchen countertop with laminate':{m:250,h:6.0},'repair diswasher':{m:40,h:1.0},'replace dishwasher white':{m:450,h:2.0},'replace dishwasher black':{m:450,h:2.0},'replace dishwasher stainless steel':{m:550,h:2.0},'repair refrigerator':{m:60,h:1.0},'replace refrigerator white':{m:700,h:2.0},'replace refrigerator black':{m:700,h:2.0},'replace refrigerator stainless steel':{m:900,h:2.0},'repair stove':{m:60,h:1.0},'replace stove white':{m:600,h:2.0},'replace stove black':{m:600,h:2.0},'replace stove stainless steel':{m:750,h:2.0},'repair microwave':{m:40,h:.75},'replace microwave white':{m:180,h:1.25},'replace microwave black':{m:180,h:1.25},'replace microwave stainless steel':{m:220,h:1.25},'repair wall cabinet':{m:15,h:.5},'replace wall cabinets':{m:300,h:6.0},'repair base cabinet':{m:15,h:.5},'replace base cabinets':{m:400,h:7.0},'design create layout':{m:0,h:1.0},'retighten cabinet knobs':{m:2,h:.25},'replace cabinet knobs':{m:30,h:.5},'retighten cabinet hinges':{m:2,h:.25},'replace cabinet hinges':{m:25,h:.75},'caulk trim with latex painters caulk':{m:8,h:.5},'reattach trim in marked locations':{m:5,h:.5},'wood putty trim to repair in marked locations':{m:8,h:.5},'replace base trim':{m:0,h:0},'replace casing trim':{m:0,h:0},'replace window jambs and sills':{m:40,h:3.0},'repair marked door with wood putty':{m:8,h:.75},'reattach marked door to hinges':{m:5,h:.25},'retighten bifold door knob':{m:2,h:.25},'repair bifold track and slider system':{m:20,h:.75},'retighten bifold door hinges':{m:2,h:.25},'replace interior door':{m:120,h:3.0},'repair superficial wall damage in marked locations':{m:.25,h:.018},'repair superficial ceiling damage in marked locations':{m:.25,h:.018},'paint walls':{m:0,h:0},'paint walls with primer':{m:0,h:0},'paint ceiling':{m:0,h:0},'paint ceiling with primer':{m:0,h:0},'paint doors':{m:20,h:1.5},'paint doors with primer':{m:25,h:2.0},'paint trim and casing':{m:0,h:0},'paint trim and casing with primer':{m:0,h:0},'paint hvac registers':{m:8,h:.75},'paint hvac baseboard/radiator':{m:15,h:1.5},'reuse existing hardwood, vinyl or carpet flooring':{m:10,h:.5},'repair existing vinyl plank floor':{m:0,h:0},'replace flooring with click lock flooring':{m:0,h:0},'repair pantry racks':{m:10,h:.5},'replace pantry racks':{m:60,h:1.5},'repair closet racks':{m:10,h:.5},'replace closet racks':{m:60,h:1.5},'replace batteries in smoke detector':{m:5,h:.25},'replace battery operated smoke detector':{m:25,h:.5},'replace battery operated smoke/co detector':{m:35,h:.5},'replace wireless interconnected smoke detector':{m:55,h:.75},'replace wireless interconnected smoke/co detector':{m:65,h:.75},'replace wired smoke detector':{m:35,h:.75},'replace wired smole/co detector':{m:45,h:.75},'replace gfci outlet':{m:18,h:.75},'replace 15 amp outlet':{m:8,h:.75},'replace 20 amp outlet':{m:10,h:.75},'replace stove outlet':{m:25,h:1.0},'replace dryer outlet':{m:25,h:1.0},'replace 2 way switch':{m:8,h:.75},'replace 3 way switch':{m:12,h:.75},'replace 4 way switch':{m:18,h:.75},'replace gfci outlet cover':{m:4,h:.25},'replace stove outlet cover':{m:4,h:.25},'replace dryer outlet cover':{m:4,h:.25},'replace outlet cover':{m:2,h:.25},'replace switch cover':{m:2,h:.25},'replace double switch cover':{m:3,h:.25},'replace switch and outlet cover':{m:3,h:.25},'replace switch and gfci cover':{m:3,h:.25},'replace triple switch cover':{m:4,h:.25},'replace failed light bulbs with led':{m:10,h:.25},'replace failed bulbs in lights with led':{m:10,h:.25},'replace ceiling light flush mount':{m:40,h:1.0},'replace ceiling light can':{m:25,h:1.0},'replace hanging light over sink':{m:55,h:1.0},'replace dining room table hanging light':{m:80,h:1.5},'replace hanging ceiling light':{m:65,h:1.5},'replace wall mount light above the sink':{m:55,h:1.0},'replace batteries in hvac thermostat':{m:5,h:.25},'replace hvac thermostat':{m:45,h:1.0},'retighten door knobs':{m:2,h:.25},'replace pass thru door knobs':{m:25,h:.75},'replace locking door knobs':{m:30,h:.75},'retighten floor and hinge door stops':{m:2,h:.25},'replace hinge door stop':{m:5,h:.5},'replace floor door stop':{m:5,h:.5},'replace hvac floor register':{m:12,h:.5},'replace hvac wall register':{m:12,h:.5},'replace hvac ceiling diffusor':{m:15,h:.5},'replace hvac baseboard cover':{m:45,h:1.5},'replace hvac radiator':{m:200,h:3.0},'replace 1/4 turn ball valves':{m:20,h:1.0},'retighten supply lines to stop leak':{m:2,h:.25},'replace supply line':{m:12,h:.5},'recaulk vanity/pedestal top to wall with 100% silicone':{m:8,h:.5},'reattach vanity/pedestal to the wall':{m:10,h:.5},'reattach top to vanity/pedestal':{m:8,h:.25},'replace vanity with size below':{m:280,h:5.0},'repair toilet internals with a rebuild kit':{m:25,h:.75},'retighten toilet to the floor':{m:5,h:.5},'replace the rotted subfloor under toilet':{m:60,h:4.0},'unclog toilet':{m:5,h:.5},'replace toilet':{m:180,h:2.0},'replace toilet seat':{m:30,h:.5},'replace jonny bolts':{m:8,h:1.0},'replace wax ring':{m:12,h:1.0},'replace toilet flange with a repair flange':{m:20,h:1.25},'reattach medicine cabinet/mirror to the wall':{m:5,h:.5},'retighten medicine cabinet hinge':{m:2,h:.25},'replace medicine cabinet/mirror to the wall':{m:80,h:1.5},'retighten toilet paper holder to the wall':{m:3,h:.25},'replace toilet paper holder':{m:20,h:.5},'retighten hand towel bar/ring to the wall':{m:3,h:.25},'replace hand towel bar/ring':{m:25,h:.5},'replace/reattach vent fan/light combo cover':{m:15,h:.5},'replace vent fan/light combo':{m:75,h:1.75},'recaulk shower assembly with 100% silicone':{m:10,h:.75},'recaulk tub/shower assembly with 100% silicone':{m:10,h:.75},'unclog shower drain':{m:5,h:.5},'unclog tub drain':{m:5,h:.5},'replace shower walls with new set':{m:220,h:6.0},'replace shower pan with new pan':{m:180,h:6.0},'replace tub surround with new set':{m:200,h:5.5},'replace tub with new tub':{m:350,h:8.0},'recoat tub with acrylic coating':{m:80,h:2.0},'replace shower valve cartridge':{m:35,h:1.0},'retighten shower valve handle':{m:2,h:.25},'retighten shower valve cover':{m:2,h:.25},'repair leaking shower head':{m:5,h:.5},'replace shower valve escutcheon kit':{m:25,h:.5},'replace shower head':{m:40,h:.75},'replace tub spout':{m:25,h:.75},'retighten tub spout':{m:2,h:.25},'repair drain stopper':{m:15,h:.5},'repair drain stopper (bath)':{m:15,h:.5},'replace sink supply lines (bath)':{m:15,h:.5},'retighten handrail':{m:5,h:.5},'replace handrail bracket':{m:12,h:.75},'replace handrail':{m:80,h:2.0},'resupport stair tred':{m:5,h:.5},'reattach stair tred':{m:5,h:.5},'replace pine tred':{m:35,h:1.5},'replace oak tred':{m:55,h:1.5},'reattach stair riser':{m:5,h:.5},'replace stair riser':{m:30,h:1.25},'reattach nowell post':{m:10,h:.75},'replace nowell post':{m:90,h:2.5},'reattach ballaster':{m:5,h:.25},'replace ballaster':{m:20,h:.75},'unclog laundry drain':{m:5,h:.5},'replace laundry valve and drain box':{m:85,h:3.0},'inspect electrical panel':{m:0,h:.5},'replace electrical panel cover':{m:25,h:.5},'repair/replace damaged branch wiring':{m:60,h:2.0},'replace basement window':{m:120,h:2.5},'caulk basement window':{m:8,h:.5},'replace basement exterior access door':{m:280,h:3.5},'repair sump pump':{m:45,h:1.0},'replace sump pump':{m:180,h:2.0},'unclog floor drain':{m:10,h:.75},'replace floor drain cover':{m:15,h:.25},'repair water heater':{m:60,h:1.5},'replace water heater':{m:650,h:3.5},'inspect/repair gas lines and connections':{m:15,h:1.0},'inspect/repair water supply lines':{m:20,h:.75},'replace pressure tank':{m:280,h:2.5},'replace HVAC filter':{m:25,h:.25},'repair HVAC condensate drain':{m:20,h:.75},'repair/reconnect ductwork':{m:35,h:1.5},'replace ductwork section':{m:80,h:2.5},'inspect/repair sewer drain lines':{m:20,h:1.0},'replace basement stairs':{m:280,h:5.0},'replace basement handrail':{m:80,h:2.0},'repair basement walls (water damage)':{m:85,h:3.0},'apply waterproof coating to basement walls':{m:120,h:4.0},'inspect attic':{m:0,h:.5},'replace attic access door':{m:120,h:2.0},'repair/replace attic folding ladder':{m:180,h:2.5},'replace attic handrail':{m:65,h:1.5},'repair roof deck water damage':{m:150,h:4.0},'replace damaged rafter/truss member':{m:120,h:3.5},'seal roof deck penetrations':{m:25,h:1.0},'add/replace attic insulation (blown)':{m:0,h:0},'add/replace attic insulation (batt)':{m:0,h:0},'replace/reposition baffles':{m:30,h:1.5},'clear/repair soffit vents':{m:15,h:.75},'replace ridge vent':{m:60,h:2.0},'repair/replace roof vent':{m:45,h:1.5},'pest/rodent remediation and exclusion':{m:80,h:2.5},'seal attic penetrations (pest exclusion)':{m:30,h:1.5},'repair attic wiring':{m:50,h:1.5},'replace junction box cover (attic)':{m:5,h:.25},'replace doorbell':{m:45,h:0.75},'repair doorbell wiring':{m:15,h:0.5},'replace mailbox':{m:60,h:0.75},'repair/secure mailbox':{m:10,h:0.5},'replace exterior door':{m:350,h:4.0},'repair exterior door':{m:30,h:1.5},'replace exterior door weatherstripping':{m:25,h:0.75},'replace exterior door threshold':{m:45,h:1.0},'replace exterior window':{m:280,h:3.5},'repair exterior window':{m:30,h:1.0},'caulk exterior window':{m:12,h:0.5},'replace exterior window screen':{m:30,h:0.5},'replace exterior window lock/handle':{m:25,h:0.5},'repair roof':{m:150,h:2.5},'replace roof section':{m:400,h:5.0},'replace roof vent (exterior)':{m:45,h:1.5},'repair/replace fascia board':{m:60,h:2.0},'repair/replace soffit':{m:55,h:2.0},'clean gutters':{m:0,h:1.0},'repair gutters':{m:25,h:1.0},'replace gutter section':{m:45,h:1.5},'reattach gutter':{m:10,h:0.75},'replace gutter end cap':{m:8,h:0.5},'replace downspout':{m:35,h:1.0},'reattach downspout':{m:8,h:0.5},'extend/redirect downspout':{m:25,h:0.75},'clean downspout':{m:0,h:0.5},'replace exterior gfci outlet':{m:25,h:1.0},'replace exterior light fixture':{m:55,h:1.0},'replace porch/patio light fixture':{m:65,h:1.0},'replace exterior outlet cover':{m:6,h:0.25},'replace electric meter cover':{m:20,h:0.5},'clear vegetation from HVAC unit':{m:0,h:0.75},'replace HVAC disconnect box':{m:45,h:1.0},'repair/seal HVAC line set':{m:25,h:0.75},'secure/level HVAC unit pad':{m:40,h:1.0},'repair vinyl siding':{m:30,h:1.5},'replace vinyl siding section':{m:75,h:2.5},'repair wood siding':{m:35,h:1.5},'replace wood siding section':{m:85,h:3.0},'caulk/seal siding gaps':{m:12,h:0.75},'paint exterior siding':{m:0,h:0},'clean/pressure wash siding':{m:0,h:0},'repair porch/patio surface':{m:45,h:2.0},'replace porch/patio boards':{m:0,h:0},'repair/replace porch railing':{m:80,h:2.5},'repair steps':{m:55,h:2.0},'replace step tread':{m:45,h:1.5},'repair/replace exterior handrail':{m:80,h:2.0},'repair/replace exterior handrail bracket':{m:15,h:0.75},'repair sidewalk (crack fill)':{m:20,h:1.0},'replace sidewalk section':{m:0,h:0},'repair driveway (crack fill/seal)':{m:35,h:1.5},'replace driveway section':{m:0,h:0},'inspect/repair exterior water supply line':{m:25,h:1.0},'replace exterior water shutoff valve':{m:35,h:1.0},'repair/replace well pump':{m:450,h:4.0},'replace well pressure switch':{m:85,h:1.0},'cap/seal well casing':{m:25,h:0.75},'inspect/repair exterior sewer/septic line':{m:30,h:1.5},'pump/service septic tank':{m:350,h:1.0},'replace septic riser lid':{m:45,h:0.5},'replace cleanout cap':{m:12,h:0.25},'trim vegetation from HVAC unit':{m:0,h:0.75},'trim vegetation from power lines':{m:0,h:2.0},'remove tree/shrub encroaching on structure':{m:0,h:3.0},'replace double outlet cover':{m:3,h:0.25},'replace blank electrical cover plate':{m:3,h:0.25},'add or replace closet light':{m:45,h:0.75},'paint windows':{m:0,h:0},'paint windows with primer':{m:0,h:0},'replace hvac return register':{m:25,h:0.5},'replace hvac supply wall register':{m:12,h:0.5},'replace hvac supply floor register':{m:12,h:0.5},'replace hvac supply ceiling diffuser':{m:15,h:0.5},'replace transition strips':{m:0,h:0},'paint closet door handles/knobs':{m:8,h:0.5},'replace bull nose stair transition/protector':{m:0,h:0},'repair interior door with wood putty':{m:8,h:0.75},'paint interior door':{m:20,h:1.5},'interior door paint touch-up':{m:8,h:0.5}};
+var MATS = {'replace faucet':['Faucet (match existing)','Plumber\'s putty','Teflon tape'],'retighten faucet':['Thread-lock or plumber\'s tape'],'repair dripping faucet with new cartriges':['Replacement cartridge (match mfg)','O-rings','Plumber\'s grease'],'replace strainers':['Basket strainer set','Plumber\'s putty'],'caulk with 100% silicone kitchen sink':['100% silicone caulk','Painter\'s tape','Caulk tool'],'caulk around windowpane':['Window caulk (silicone or latex)','Painter\'s tape','Caulk gun','Utility knife'],'replace double bowl sink':['Double-bowl sink','Plumber\'s putty','Basket strainers','Mounting clips'],'replace single bowl sink':['Single-bowl sink','Plumber\'s putty','Basket strainer','Mounting clips'],'reattach sink':['Silicone adhesive','Mounting clips'],'repair drain piping that is leaking':['PVC pipe/fittings','PVC primer & cement','Slip-joint washers'],'replace drain plumbing':['P-trap kit','Drain tailpiece','Slip-joint washers'],'unclog drain':['Drain snake','Drain cleaner'],'repair leaking supply lines':['Supply line','Teflon tape'],'replace sink supply lines':['Braided stainless supply lines (2)','Teflon tape'],'replace sink 1/4 turn ball valves':['1/4-turn ball valve (2)','Teflon tape'],'caulk with 100% silicone kitchen countertop':['100% silicone caulk','Painter\'s tape'],'reattach countertop':['Construction adhesive'],'replace kitchen countertop with laminate':['Laminate countertop (per layout)','End caps','Construction adhesive','Silicone caulk'],'repair diswasher':['Diagnostics - parts TBD'],'replace dishwasher white':['White dishwasher 24"','Drain hose','Power cord'],'replace dishwasher black':['Black dishwasher 24"','Drain hose','Power cord'],'replace dishwasher stainless steel':['Stainless dishwasher 24"','Drain hose','Power cord'],'repair refrigerator':['Diagnostics - parts TBD'],'replace refrigerator white':['White refrigerator'],'replace refrigerator black':['Black refrigerator'],'replace refrigerator stainless steel':['Stainless refrigerator'],'repair stove':['Diagnostics - parts TBD'],'replace stove white':['White range/stove','Anti-tip bracket'],'replace stove black':['Black range/stove','Anti-tip bracket'],'replace stove stainless steel':['Stainless range/stove','Anti-tip bracket'],'repair microwave':['Diagnostics - parts TBD'],'replace microwave white':['White microwave'],'replace microwave black':['Black microwave'],'replace microwave stainless steel':['Stainless microwave'],'repair wall cabinet':['Wood glue','Cabinet screws','Touch-up paint'],'replace wall cabinets':['Wall cabinets (per layout)','Cabinet screws','Shims'],'repair base cabinet':['Wood glue','Cabinet screws','Touch-up paint'],'replace base cabinets':['Base cabinets (per layout)','Cabinet screws','Shims','Levelers'],'replace cabinet knobs':['Cabinet knobs','Screws'],'replace cabinet hinges':['Cabinet hinges (match)','Screws'],'caulk trim with latex painters caulk':['Latex paintable caulk','Painter\'s tape','Caulk gun'],'replace base trim':['Base trim molding (per LF)','Finish nails','Painter\'s caulk','White trim paint'],'replace casing trim':['Door/window casing (per LF)','Finish nails','White trim paint'],'replace window jambs and sills':['Pine/poplar board (per size)','Finish nails','White trim paint'],'repair marked door with wood putty':['Wood putty','Sandpaper','Touch-up paint'],'replace interior door':['Interior door (per size)','Hinges','Shims','Casing trim'],'repair superficial wall damage in marked locations':['Joint compound','Sandpaper (120/220 grit)','Primer spot coat','Paint to match walls'],'repair small holes in walls':['Drywall patch kit (peel & stick or metal clip)','Joint compound','Sandpaper (120/220 grit)','Primer spot coat','Paint to match walls'],'repair large wall damage':['Drywall sheet (4x8 match thickness)','Mesh tape','Joint compound','Corner bead (if needed)','Sandpaper','Primer','Paint to match walls'],'repair superficial ceiling damage in marked locations':['Joint compound','Sandpaper (120/220 grit)','Primer spot coat','Ceiling white flat paint'],'repair small holes in ceiling':['Drywall patch kit (peel & stick or metal clip)','Joint compound','Sandpaper (120/220 grit)','Primer spot coat','Ceiling white flat paint'],'repair large ceiling damage':['Drywall sheet (4x8 match thickness)','Mesh tape','Joint compound','Sandpaper','Primer','Ceiling white flat paint'],'paint walls':['Interior latex paint ~350 sq ft/gal','Roller covers','2" angled brush','Painter\'s tape','Drop cloth','Masking plastic or paper (trim/fixtures)'],'paint walls with primer':['Interior latex paint with primer','Primer (1st coat)','Roller covers','2" angled brush','Painter\'s tape','Drop cloth','Masking plastic or paper (trim/fixtures)'],'paint ceiling':['Ceiling white flat paint ~350 sq ft/gal','Roller cover (3/8" nap)','Extension pole','Drop cloth','Painter\'s tape (ceiling/wall junction)'],'paint ceiling with primer':['Ceiling white flat paint with primer','Primer (1st coat)','Roller cover (3/8" nap)','Extension pole','Drop cloth','Painter\'s tape (ceiling/wall junction)'],'paint doors':['Interior door paint semi-gloss','2" angled brush','Mini roller','Drop cloth','Painter\'s tape (hinges & hardware)','Mineral spirits for cleanup'],'paint doors with primer':['Interior door paint semi-gloss','Primer','2" angled brush','Mini roller','Drop cloth','Painter\'s tape (hinges & hardware)','Mineral spirits for cleanup'],'paint trim and casing':['White semi-gloss trim paint (per LF)','2" angled brush','Painter\'s tape (wall + floor side)','Drop cloth','Mineral spirits for cleanup'],'paint trim and casing with primer':['White semi-gloss trim paint (per LF)','Primer','2" angled brush','Painter\'s tape (wall + floor side)','Drop cloth','Mineral spirits for cleanup'],'replace flooring with click lock flooring':['Click-lock LVP (per sq ft +10%)','Underlayment','Transition strips','Quarter round'],'repair existing vinyl plank floor':['Replacement planks (per sq ft)','Pull bar','Tapping block'],'replace closet racks':['Wire shelf kit','Brackets','Screws','Anchors'],'replace pantry racks':['Wire/wood shelf system','Shelf pins','Screws'],'replace toilet':['Toilet','Wax ring','Johnny bolts','Supply line'],'replace toilet seat':['Toilet seat (match bowl shape)'],'replace wax ring':['Wax ring','Johnny bolts'],'replace jonny bolts':['Johnny bolt set'],'replace toilet flange with a repair flange':['Flange repair kit','Flange screws'],'replace vanity with size below':['Vanity (per size)','Faucet','Supply lines','Drain assembly','P-trap'],'replace medicine cabinet/mirror to the wall':['Medicine cabinet/mirror','Mounting screws','Wall anchors'],'replace toilet paper holder':['Toilet paper holder','Mounting screws','Wall anchors'],'replace hand towel bar/ring':['Towel bar or ring','Mounting screws','Wall anchors'],'replace vent fan/light combo':['Bathroom exhaust fan/light','Wire nuts','Duct connector'],'recaulk shower assembly with 100% silicone':['100% silicone caulk','Painter\'s tape','Utility knife'],'recaulk tub/shower assembly with 100% silicone':['100% silicone caulk','Painter\'s tape','Utility knife'],'replace shower walls with new set':['3-piece shower wall kit','Adhesive','Silicone caulk'],'replace shower pan with new pan':['Shower pan (match dims)','Mortar mix','Drain assembly','Silicone caulk'],'replace tub surround with new set':['Tub surround kit','Adhesive','Silicone caulk'],'replace tub with new tub':['Alcove tub','Drain/overflow kit','Silicone caulk'],'recoat tub with acrylic coating':['Tub refinishing kit','Etching compound','Primer','Drop cloth'],'replace shower valve cartridge':['Replacement cartridge','Plumber\'s grease'],'replace shower head':['Shower head','Teflon tape'],'replace tub spout':['Tub spout','Teflon tape'],'replace handrail':['Handrail','Handrail brackets','End caps','Screws'],'replace pine tred':['Pine stair tread','Construction screws','Construction adhesive'],'replace oak tred':['Oak stair tread','Finish nails','Construction adhesive'],'replace stair riser':['Stair riser board','Finish nails','Wood glue'],'replace nowell post':['Newel post','Lag bolts','Post cap'],'replace ballaster':['Baluster (match style)','Construction adhesive','Finish nails'],'replace laundry valve and drain box':['Laundry valve box','Gate valves','Drain fitting'],'replace gfci outlet':['GFCI outlet','Wire nuts'],'replace 15 amp outlet':['15A outlet','Wire nuts'],'replace 20 amp outlet':['20A outlet','Wire nuts'],'replace stove outlet':['Range outlet 50A','Wire nuts'],'replace dryer outlet':['Dryer outlet 30A','Wire nuts'],'replace 2 way switch':['Single-pole switch','Wire nuts'],'replace 3 way switch':['3-way switch','Wire nuts'],'replace 4 way switch':['4-way switch','Wire nuts'],'replace ceiling light flush mount':['Flush mount fixture','Wire nuts'],'replace ceiling light can':['Recessed can kit','Wire nuts'],'replace hanging light over sink':['Sink pendant light','Wire nuts'],'replace dining room table hanging light':['Dining pendant/chandelier','Wire nuts'],'replace hanging ceiling light':['Ceiling pendant','Wire nuts'],'replace wall mount light above the sink':['Vanity bar light','Wire nuts'],'replace hvac thermostat':['Replacement thermostat','Screws','Batteries'],'replace pass thru door knobs':['Passage door knob set','Strike plate','Screws'],'replace locking door knobs':['Privacy door knob set','Strike plate','Screws'],'replace hvac baseboard cover':['Baseboard heater cover','End caps'],'replace hvac radiator':['Replacement radiator','Bleed key','Brackets'],'inspect electrical panel':['Panel schedule/labeling tape','Flashlight'],'replace electrical panel cover':['Replacement panel cover (match make/model)','Panel screws'],'repair/replace damaged branch wiring':['NM cable (match gauge)','Wire nuts','Electrical staples','Junction box if needed'],'replace basement window':['Replacement window (match rough opening)','Exterior caulk','Shims','Interior trim if needed'],'caulk basement window':['100% silicone or polyurethane caulk','Painter\'s tape','Utility knife'],'replace basement exterior access door':['Exterior door with frame (match opening)','Shims','Exterior caulk','Hardware','Weatherstripping'],'repair sump pump':['Diagnostics - parts TBD','Float switch if needed'],'replace sump pump':['Submersible sump pump (match HP)','Discharge pipe','Check valve','Sump pump cover'],'unclog floor drain':['Drain snake/auger','Drain cleaner'],'replace floor drain cover':['Floor drain cover (match size/style)'],'repair water heater':['Diagnostics - parts TBD (anode rod thermostat element T&P valve)'],'replace water heater':['Water heater (match capacity & fuel type)','Flex connectors','Teflon tape','T&P relief valve','Discharge pipe'],'inspect/repair gas lines and connections':['Gas leak detector solution','Fittings as needed','Pipe thread compound (gas-rated)'],'inspect/repair water supply lines':['Braided stainless supply lines as needed','Teflon tape','Fittings as needed'],'replace pressure tank':['Bladder pressure tank (match size)','Pressure gauge','Fittings','Teflon tape'],'replace HVAC filter':['HVAC filter (match size and MERV rating)'],'repair HVAC condensate drain':['PVC pipe/fittings','PVC cement','Condensate drain pan tablets'],'repair/reconnect ductwork':['HVAC foil tape','Duct mastic sealant','Sheet metal screws','Support straps'],'replace ductwork section':['Flex duct or sheet metal duct (match diameter)','HVAC foil tape','Duct mastic','Support straps'],'inspect/repair sewer drain lines':['Drain snake/auger','PVC fittings as needed','PVC primer & cement'],'replace basement stairs':['Stair stringers (match rise/run)','Pine or oak treads','Risers','Construction screws','Construction adhesive'],'replace basement handrail':['Handrail (match length)','Handrail brackets','Lag screws','End caps'],'repair basement walls (water damage)':['Hydraulic cement','Wire brush','Masonry patching compound','Primer'],'apply waterproof coating to basement walls':['Masonry waterproof sealer (per sq ft)','Thick-nap roller covers','Masonry brush','Painter\'s tape'],'inspect attic':['Flashlight','Protective mask N95','Disposable coveralls'],'replace attic access door':['Attic access door kit (match opening)','Insulation cover if needed','Weatherstripping','Shims'],'repair/replace attic folding ladder':['Attic folding ladder (match rough opening)','Shims','Hardware','Weatherstripping'],'replace attic handrail':['Handrail (match style & length)','Handrail brackets','Lag screws'],'repair roof deck water damage':['Roof deck sheathing (match thickness)','Ring-shank nails or screws','Roofing felt','Ice & water shield'],'replace damaged rafter/truss member':['Framing lumber (match dimension)','Construction screws or nails','Joist hangers','Hurricane ties'],'seal roof deck penetrations':['Roofing caulk or flashing sealant','Flashing if needed','Roofing nails'],'add/replace attic insulation (blown)':['Blown cellulose or fiberglass insulation (per sq ft)','Insulation dam boards at eaves'],'add/replace attic insulation (batt)':['Fiberglass or mineral wool batt (per sq ft match depth)','Insulation support wires if floor joists'],'replace/reposition baffles':['Polystyrene or cardboard rafter baffles (qty per rafter bay)','Staple gun & staples'],'clear/repair soffit vents':['Replacement soffit vent (match size)','Screws','Screen patch if needed'],'replace ridge vent':['Ridge vent (per LF match shingle type)','Roofing nails','Roofing caulk'],'repair/replace roof vent':['Replacement roof vent (match size)','Roofing nails','Roofing caulk','Flashing'],'pest/rodent remediation and exclusion':['Steel wool','Expandable foam (pest-rated)','Hardware cloth 1/4 inch','Staples','Bait stations if needed'],'seal attic penetrations (pest exclusion)':['Expandable foam (pest-rated)','Steel wool','Hardware cloth','Caulk paintable'],'repair attic wiring':['NM cable (match gauge)','Wire nuts','Electrical staples','Junction box if needed','Electrical tape'],'replace junction box cover (attic)':['Junction box cover plate'],'replace doorbell':['Doorbell unit (wired or wireless)','Doorbell wire (if wired)','Mounting screws'],'repair doorbell wiring':['Doorbell wire (18/2)','Wire connectors','Electrical tape'],'replace mailbox':['Mailbox (match style)','Mounting post or hardware','Concrete (if post-mount)','Lag screws'],'repair/secure mailbox':['Lag screws or mounting bolts','Post repair hardware (if needed)'],'replace exterior door':['Exterior prehung door (match opening & swing)','Exterior caulk','Weatherstripping','Threshold','Shims','Exterior trim','Exterior paint'],'repair exterior door':['Wood filler or epoxy','Sandpaper','Exterior paint','Weatherstripping (if needed)'],'replace exterior door weatherstripping':['Door weatherstripping set (match door size)','Contact cement or screws'],'replace exterior door threshold':['Exterior door threshold (match width)','Screws','Exterior caulk'],'replace exterior window':['Replacement window (match rough opening)','Exterior caulk','Shims','Exterior trim','Exterior paint'],'repair exterior window':['Glazing compound','Exterior paint','Caulk','Replacement hardware (if needed)'],'caulk exterior window':['Exterior-grade silicone or polyurethane caulk','Painter\'s tape','Utility knife'],'replace exterior window screen':['Window screen kit or pre-made screen (match size)','Screen spline','Spline roller'],'replace exterior window lock/handle':['Window lock or handle set (match type)','Screws'],'repair roof':['Matching shingles','Roofing nails','Roofing cement/sealant','Ice & water shield (if at eave)'],'replace roof section':['Shingles (match type/color — per square)','Roofing felt or synthetic underlayment','Roofing nails','Drip edge','Ice & water shield','Roofing cement'],'replace roof vent (exterior)':['Replacement roof vent (match size)','Roofing nails','Roofing caulk','Flashing'],'repair/replace fascia board':['Fascia board (match width & material)','Galvanized nails or screws','Exterior primer','Exterior paint'],'repair/replace soffit':['Soffit panel (match material/width)','Soffit vent (if replacing vented section)','Nails or screws','Exterior paint'],'clean gutters':['Gutter scoop or trowel','Garden hose','Safety ladder'],'repair gutters':['Gutter sealant','Gutter patch kit','Sheet metal screws','Safety ladder'],'replace gutter section':['Aluminum gutter section (match size/color)','Gutter spikes or hidden hangers','End cap','Gutter sealant','Downspout connector'],'reattach gutter':['Gutter spikes or hidden hangers','Fascia screws','Gutter sealant'],'replace gutter end cap':['Gutter end cap (match size)','Gutter sealant'],'replace downspout':['Aluminum downspout (match size/color)','Downspout straps','Sheet metal screws','Splash block or extension'],'reattach downspout':['Downspout straps','Sheet metal screws'],'extend/redirect downspout':['Downspout extension or flex drain','Downspout elbows','Sheet metal screws'],'clean downspout':['Garden hose','Plumber\'s snake or auger (if clogged)'],'replace exterior gfci outlet':['GFCI outlet (weather-resistant 15A or 20A)','In-use cover plate','Wire nuts','Exterior caulk'],'replace exterior light fixture':['Exterior-rated light fixture','Wire nuts','Mounting hardware','Exterior caulk'],'replace porch/patio light fixture':['Exterior-rated porch light fixture','Wire nuts','Mounting hardware','Exterior caulk'],'replace exterior outlet cover':['Weather-resistant in-use cover plate'],'replace electric meter cover':['Meter socket cover (match utility type)'],'clear vegetation from HVAC unit':['Pruning shears','Gloves','Yard waste bags'],'replace HVAC disconnect box':['Exterior HVAC disconnect box (match amperage)','Wire nuts','Conduit fittings'],'repair/seal HVAC line set':['Foam pipe insulation','Line set tape','UV-resistant cover (if exposed)'],'secure/level HVAC unit pad':['Concrete equipment pad','Gravel base','Level'],'repair vinyl siding':['Matching vinyl siding piece','Zip tool (siding removal tool)','Siding nails'],'replace vinyl siding section':['Vinyl siding (match color/profile)','Siding nails','J-channel (if needed)','Zip tool'],'repair wood siding':['Wood filler or epoxy','Sandpaper','Exterior primer','Exterior paint'],'replace wood siding section':['Wood siding boards (match profile)','Galvanized nails','Exterior primer','Exterior paint','Caulk'],'caulk/seal siding gaps':['Exterior-grade paintable caulk','Painter\'s tape','Caulk gun'],'paint exterior siding':['Exterior latex paint (coverage per sq ft)','Roller covers (thick nap)','Brushes','Painter\'s tape','Drop cloth','Masking paper'],'clean/pressure wash siding':['Pressure washer or garden hose','House washing detergent','Safety ladder'],'repair porch/patio surface':['Concrete patching compound or wood filler','Sandpaper','Exterior paint or sealant'],'replace porch/patio boards':['Pressure-treated or composite decking (per sq ft)','Decking screws','Joist tape (if applicable)'],'repair/replace porch railing':['Porch railing kit (match style)','Lag screws','Post caps','Exterior paint'],'repair steps':['Concrete patching compound or mortar','Trowel','Exterior sealant'],'replace step tread':['Concrete or wood step tread (match width)','Construction adhesive','Screws or masonry anchors'],'repair/replace exterior handrail':['Exterior handrail (match material/style)','Handrail brackets','Lag screws','Exterior paint'],'repair/replace exterior handrail bracket':['Exterior handrail bracket','Lag screws','Exterior caulk'],'repair sidewalk (crack fill)':['Concrete crack filler or patching compound','Trowel','Concrete sealant'],'replace sidewalk section':['Concrete (per sq ft) or pavers','Form boards','Gravel base','Wire mesh','Concrete sealant'],'repair driveway (crack fill/seal)':['Asphalt or concrete crack filler','Driveway sealant','Squeegee or brush'],'replace driveway section':['Asphalt or concrete (per sq ft)','Form boards','Gravel base','Compactor (rental)'],'inspect/repair exterior water supply line':['Pipe fitting/coupling (match type/size)','Teflon tape','Pipe compound','Insulation wrap'],'replace exterior water shutoff valve':['Ball valve (match pipe size)','Teflon tape','Pipe compound','Pipe fittings'],'repair/replace well pump':['Submersible well pump (match HP & depth)','Drop pipe','Pitless adapter','Torque arrestor','Wiring'],'replace well pressure switch':['Pressure switch (match PSI setting)','Wire connectors','Electrical tape'],'cap/seal well casing':['Well cap (match casing diameter)','Casing screws','Sealant'],'inspect/repair exterior sewer/septic line':['PVC pipe/fittings (match diameter)','PVC primer & cement','Pipe wrap'],'pump/service septic tank':['Septic pumping service','Riser risers/cover inspection','Baffle inspection'],'replace septic riser lid':['Septic riser lid (match diameter)','Riser screws or clips'],'replace cleanout cap':['Cleanout plug or cap (match diameter)','Teflon tape or pipe compound'],'trim vegetation from HVAC unit':['Pruning shears or loppers','Gloves','Yard waste bags'],'trim vegetation from power lines':['Long-handle pruning shears','Safety gloves','Eye protection','Yard waste bags'],'remove tree/shrub encroaching on structure':['Pruning saw or reciprocating saw','Loppers','Shovel (for roots)','Yard waste bags','Stump killer (if applicable)'],'replace double outlet cover':['Duplex outlet cover plate (double)'],'replace blank electrical cover plate':['Blank electrical cover plate (match box size)'],'add or replace closet light':['Closet light fixture (LED, motion-sensor optional)','Wire nuts','Mounting hardware','LED bulb'],'paint windows':['Interior latex paint — trim/semi-gloss (per sq ft)','2" angled brush','Painter\'s tape','Drop cloth'],'paint windows with primer':['Interior latex paint with primer — semi-gloss','Primer (1st coat)','2" angled brush','Painter\'s tape','Drop cloth'],'replace hvac return register':['HVAC return register (match size — note size in field)','Screws (if needed)'],'replace hvac supply wall register':['HVAC wall supply register (match size — note size in field)','Screws (if needed)'],'replace hvac supply floor register':['HVAC floor supply register (match size — note size in field)'],'replace hvac supply ceiling diffuser':['HVAC ceiling supply diffuser (match size — note size in field)','Screws (if needed)'],'replace transition strips':['Transition strip (match flooring type/color — per LF)','Mounting track or adhesive'],'paint closet door handles/knobs':['Cabinet/door paint (semi-gloss, match color)','Small brush','Painter\'s tape'],'replace bull nose stair transition/protector':['Bull nose stair transition/protector (match material — per LF)','Construction adhesive or screws'],'repair interior door with wood putty':['Wood putty (color match)','Sandpaper (120/220 grit)','Primer spot coat'],'paint interior door':['Interior door paint (semi-gloss)','2" angled brush','Mini roller','Drop cloth','Painter\'s tape (hinges & hardware)','Mineral spirits for cleanup'],'interior door paint touch-up':['Touch-up paint (match door color, semi-gloss)','Small brush']};
+
+var CT = ['caulk around windowpane','repair superficial wall damage in marked locations','repair small holes in walls','repair large wall damage','repair superficial ceiling damage in marked locations','repair small holes in ceiling','repair large ceiling damage','paint walls','paint walls with primer','paint ceiling','paint ceiling with primer','paint doors','paint doors with primer','paint trim and casing','paint trim and casing with primer','paint hvac registers','paint hvac baseboard/radiator','reuse existing hardwood, vinyl or carpet flooring','repair existing vinyl plank floor','replace flooring with click lock flooring','repair closet racks','replace closet racks','replace batteries in smoke detector','replace battery operated smoke detector','replace battery operated smoke/co detector','replace wireless interconnected smoke detector','replace wireless interconnected smoke/co detector','replace wired smoke detector','replace wired smole/co detector','replace gfci outlet','replace 15 amp outlet','replace 20 amp outlet','replace 2 way switch','replace 3 way switch','replace 4 way switch','replace gfci outlet cover','replace outlet cover','replace switch cover','replace double switch cover','replace switch and outlet cover','replace switch and gfci cover','replace triple switch cover','replace failed light bulbs with led','replace ceiling light flush mount','replace ceiling light can','replace batteries in hvac thermostat','replace hvac thermostat','retighten door knobs','replace pass thru door knobs','replace locking door knobs','retighten floor and hinge door stops','replace hinge door stop','replace floor door stop','replace hvac floor register','replace hvac wall register','replace hvac ceiling diffusor','replace hvac baseboard cover','replace hvac radiator','caulk trim with latex painters caulk','reattach trim in marked locations','wood putty trim to repair in marked locations','replace base trim','replace casing trim','replace window jambs and sills','repair marked door with wood putty','reattach marked door to hinges','retighten bifold door knob','repair bifold track and slider system','retighten bifold door hinges','replace interior door','replace double outlet cover','replace blank electrical cover plate','add or replace closet light','paint windows','paint windows with primer','replace hvac return register','replace hvac supply wall register','replace hvac supply floor register','replace hvac supply ceiling diffuser','replace transition strips','repair interior door with wood putty','paint interior door','interior door paint touch-up'];
+
+var SECTIONS = [
+  {n:'Kitchen',i:'🍳',t:['replace faucet','retighten faucet','repair dripping faucet with new cartriges','replace strainers','caulk with 100% silicone kitchen sink','replace double bowl sink','replace single bowl sink','reattach sink','repair drain piping that is leaking','replace drain plumbing','unclog drain','repair leaking supply lines','replace sink supply lines','replace sink 1/4 turn ball valves','caulk with 100% silicone kitchen countertop','reattach countertop','replace kitchen countertop with laminate','repair diswasher','replace dishwasher white','replace dishwasher black','replace dishwasher stainless steel','repair refrigerator','replace refrigerator white','replace refrigerator black','replace refrigerator stainless steel','repair stove','replace stove white','replace stove black','replace stove stainless steel','repair microwave','replace microwave white','replace microwave black','replace microwave stainless steel','repair wall cabinet','replace wall cabinets','design create layout','repair base cabinet','replace base cabinets','retighten cabinet knobs','replace cabinet knobs','retighten cabinet hinges','replace cabinet hinges','replace hanging light over sink','replace stove outlet','replace stove outlet cover','repair pantry racks','replace pantry racks'].concat(CT)},
+  {n:'Living Room',i:'🛋️',t:CT.slice()},
+  {n:'Dining Room',i:'🪑',t:['replace dining room table hanging light'].concat(['paint closet door handles/knobs']).concat(CT)},
+  {n:'Office',i:'💼',t:CT.slice()},
+  {n:'1/2 Bath',i:'🚿',t:['replace faucet','retighten faucet','repair drain stopper','repair drain piping that is leaking','replace drain plumbing','unclog drain','retighten supply lines to stop leak','replace sink supply lines','replace 1/4 turn ball valves','recaulk vanity/pedestal top to wall with 100% silicone','reattach vanity/pedestal to the wall','reattach top to vanity/pedestal','replace vanity with size below','repair toilet internals with a rebuild kit','retighten toilet to the floor','replace the rotted subfloor under toilet','unclog toilet','replace toilet','replace toilet seat','replace jonny bolts','replace wax ring','replace toilet flange with a repair flange','replace supply line','reattach medicine cabinet/mirror to the wall','retighten medicine cabinet hinge','replace medicine cabinet/mirror to the wall','retighten toilet paper holder to the wall','replace toilet paper holder','retighten hand towel bar/ring to the wall','replace hand towel bar/ring','replace/reattach vent fan/light combo cover','replace vent fan/light combo','replace wall mount light above the sink'].concat(['paint closet door handles/knobs']).concat(CT)},
+  {n:'3/4 Bath',i:'🚿',t:['replace faucet','retighten faucet','repair drain stopper','repair drain piping that is leaking','replace drain plumbing','unclog drain','retighten supply lines to stop leak','replace sink supply lines','replace 1/4 turn ball valves','recaulk vanity/pedestal top to wall with 100% silicone','reattach vanity/pedestal to the wall','reattach top to vanity/pedestal','replace vanity with size below','repair toilet internals with a rebuild kit','retighten toilet to the floor','replace the rotted subfloor under toilet','unclog toilet','replace toilet','replace toilet seat','replace jonny bolts','replace wax ring','replace toilet flange with a repair flange','replace supply line','reattach medicine cabinet/mirror to the wall','retighten medicine cabinet hinge','replace medicine cabinet/mirror to the wall','retighten toilet paper holder to the wall','replace toilet paper holder','retighten hand towel bar/ring to the wall','replace hand towel bar/ring','replace/reattach vent fan/light combo cover','replace vent fan/light combo','recaulk shower assembly with 100% silicone','unclog shower drain','replace shower walls with new set','replace shower pan with new pan','replace shower valve cartridge','retighten shower valve handle','retighten shower valve cover','repair leaking shower head','replace shower valve escutcheon kit','replace shower head','replace wall mount light above the sink'].concat(CT)},
+  {n:'Full Bath',i:'🛁',t:['replace faucet','retighten faucet','repair drain stopper (bath)','repair drain piping that is leaking','replace drain plumbing','unclog drain','retighten supply lines to stop leak','replace sink supply lines (bath)','replace 1/4 turn ball valves','recaulk vanity/pedestal top to wall with 100% silicone','reattach vanity/pedestal to the wall','reattach top to vanity/pedestal','replace vanity with size below','repair toilet internals with a rebuild kit','retighten toilet to the floor','replace the rotted subfloor under toilet','unclog toilet','replace toilet','replace toilet seat','replace jonny bolts','replace wax ring','replace toilet flange with a repair flange','replace supply line','reattach medicine cabinet/mirror to the wall','retighten medicine cabinet hinge','replace medicine cabinet/mirror to the wall','retighten toilet paper holder to the wall','replace toilet paper holder','retighten hand towel bar/ring to the wall','replace hand towel bar/ring','replace/reattach vent fan/light combo cover','replace vent fan/light combo','recaulk tub/shower assembly with 100% silicone','unclog tub drain','replace tub surround with new set','replace tub with new tub','recoat tub with acrylic coating','replace shower valve cartridge','retighten shower valve handle','retighten shower valve cover','retighten tub spout','repair leaking shower head','replace shower valve escutcheon kit','replace shower head','replace tub spout','replace wall mount light above the sink'].concat(CT)},
+  {n:'Hallway',i:'🚪',t:['replace hanging ceiling light'].concat(['paint closet door handles/knobs']).concat(['replace bull nose stair transition/protector']).concat(CT)},
+  {n:'Stairway',i:'🪜',t:['retighten handrail','replace handrail bracket','replace handrail','resupport stair tred','reattach stair tred','replace pine tred','replace oak tred','reattach stair riser','replace stair riser','reattach nowell post','replace nowell post','reattach ballaster','replace ballaster','replace hanging ceiling light'].concat(['replace bull nose stair transition/protector']).concat(CT)},
+  {n:'Bedroom 1',i:'🛏️',t:['replace hanging ceiling light'].concat(['paint closet door handles/knobs']).concat(CT)},
+  {n:'Bedroom 2',i:'🛏️',t:['replace hanging ceiling light'].concat(['paint closet door handles/knobs']).concat(CT)},
+  {n:'Bedroom 3',i:'🛏️',t:['replace hanging ceiling light'].concat(['paint closet door handles/knobs']).concat(CT)},
+  {n:'Bedroom 4',i:'🛏️',t:['replace hanging ceiling light'].concat(['paint closet door handles/knobs']).concat(CT)},
+  {n:'Laundry',i:'🧺',t:['unclog laundry drain','replace laundry valve and drain box','replace dryer outlet','replace dryer outlet cover','replace hanging ceiling light'].concat(['paint closet door handles/knobs']).concat(CT)},
+  {n:'Basement',i:'Bsmt',t:['inspect electrical panel','replace electrical panel cover','repair/replace damaged branch wiring','replace basement window','caulk basement window','replace basement exterior access door','repair sump pump','replace sump pump','unclog floor drain','replace floor drain cover','repair water heater','replace water heater','inspect/repair gas lines and connections','inspect/repair water supply lines','replace pressure tank','replace HVAC filter','repair HVAC condensate drain','repair/reconnect ductwork','replace ductwork section','inspect/repair sewer drain lines','replace basement stairs','replace basement handrail','repair basement walls (water damage)','apply waterproof coating to basement walls','replace batteries in smoke detector','replace battery operated smoke/co detector','replace wireless interconnected smoke/co detector','replace wired smoke detector','replace gfci outlet','replace 15 amp outlet','replace 20 amp outlet','replace 2 way switch','replace 3 way switch','replace gfci outlet cover','replace outlet cover','replace switch cover','replace failed light bulbs with led','replace ceiling light flush mount','replace ceiling light can','repair superficial wall damage in marked locations','repair superficial ceiling damage in marked locations','repair small holes in walls','repair small holes in ceiling','repair large wall damage','repair large ceiling damage','paint walls','paint walls with primer','paint ceiling','paint ceiling with primer']},
+  {n:'Attic',i:'Attic',t:['inspect attic','replace attic access door','repair/replace attic folding ladder','replace attic handrail','repair roof deck water damage','replace damaged rafter/truss member','seal roof deck penetrations','add/replace attic insulation (blown)','add/replace attic insulation (batt)','replace/reposition baffles','clear/repair soffit vents','replace ridge vent','repair/replace roof vent','pest/rodent remediation and exclusion','seal attic penetrations (pest exclusion)','repair attic wiring','replace junction box cover (attic)','replace batteries in smoke detector','replace battery operated smoke/co detector','replace wireless interconnected smoke/co detector','replace wired smoke detector','replace gfci outlet','replace 15 amp outlet','replace gfci outlet cover','replace outlet cover','replace switch cover','replace failed light bulbs with led','replace ceiling light flush mount','replace ceiling light can','replace 2 way switch','replace 3 way switch','replace interior door','retighten door knobs','replace pass thru door knobs','replace locking door knobs','replace hinge door stop','replace floor door stop']},
+  {n:'Exterior',i:'Ext',t:['replace doorbell','repair doorbell wiring','replace mailbox','repair/secure mailbox','replace exterior door','repair exterior door','replace exterior door weatherstripping','replace exterior door threshold','replace exterior window','repair exterior window','caulk exterior window','replace exterior window screen','replace exterior window lock/handle','repair roof','replace roof section','replace roof vent (exterior)','repair/replace fascia board','repair/replace soffit','clean gutters','repair gutters','replace gutter section','reattach gutter','replace gutter end cap','replace downspout','reattach downspout','extend/redirect downspout','clean downspout','replace exterior gfci outlet','replace exterior light fixture','replace porch/patio light fixture','replace exterior outlet cover','replace electric meter cover','clear vegetation from HVAC unit','replace HVAC disconnect box','repair/seal HVAC line set','secure/level HVAC unit pad','repair vinyl siding','replace vinyl siding section','repair wood siding','replace wood siding section','caulk/seal siding gaps','paint exterior siding','clean/pressure wash siding','repair porch/patio surface','replace porch/patio boards','repair/replace porch railing','repair steps','replace step tread','repair/replace exterior handrail','repair/replace exterior handrail bracket','repair sidewalk (crack fill)','replace sidewalk section','repair driveway (crack fill/seal)','replace driveway section','inspect/repair exterior water supply line','replace exterior water shutoff valve','repair/replace well pump','replace well pressure switch','cap/seal well casing','inspect/repair exterior sewer/septic line','pump/service septic tank','replace septic riser lid','replace cleanout cap','trim vegetation from HVAC unit','trim vegetation from power lines','remove tree/shrub encroaching on structure']}
+];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function nk(s){ return s.toLowerCase().replace(/\/co\/?/g,'/co').trim(); }
+function bg(t){ return BG[nk(t)] || {m:0,h:0}; }
+function mr(t){ return MR[nk(t)] || null; }
+function qt(t){ return QT[nk(t)] || null; }
+function effH(j){
+  if(j.hrsOv !== undefined && j.hrsOv !== null) return j.hrsOv;
+  var r = mr(j.task);
+  var raw = r ? r.h * (j.meas||0) : bg(j.task).h;
+  return Math.max(0.5, raw);
+}
+function effM(j){
+  var r = mr(j.task);
+  return r ? r.m * (j.meas||0) : bg(j.task).m;
+}
+function effMats(j){
+  if(j.matsOv !== undefined && j.matsOv !== null) return j.matsOv;
+  return MATS[nk(j.task)] || [];
+}
+function countJobs(){ return Object.keys(jobs).length; }
+function updateBadge(){ document.getElementById('totalBadge').textContent = countJobs(); }
+
+// ── Build scope tab ───────────────────────────────────────────────────────────
+function buildScope(){
+  var list = document.getElementById('scopeList');
+  list.innerHTML = '';
+  SECTIONS.forEach(function(sec){
+    var card = document.createElement('div');
+    card.className = 'sec-card';
+    card.id = 'sc-' + sec.n;
+
+    var hdr = document.createElement('div');
+    hdr.className = 'sec-hdr';
+    hdr.innerHTML = '<div class="sec-hdr-left"><span>' + sec.i + '</span><span>' + sec.n + '</span><span class="sec-bdg" id="sb-' + sec.n + '">0</span></div><span class="chevron">&#9654;</span>';
+    hdr.addEventListener('click', function(){ card.classList.toggle('open'); });
+
+    var body = document.createElement('div');
+    body.className = 'sec-body';
+
+    var sr = document.createElement('div');
+    sr.className = 'room-srch';
+    var si = document.createElement('input');
+    si.type = 'text';
+    si.placeholder = 'Filter ' + sec.n + '…';
+    var nm = document.createElement('div');
+    nm.className = 'no-match';
+    nm.id = 'nm-' + sec.n;
+    nm.textContent = 'No matching jobs';
+    si.addEventListener('click', function(e){ e.stopPropagation(); });
+    si.addEventListener('input', function(){
+      var q = si.value.toLowerCase();
+      var any = false;
+      card.querySelectorAll('.task-row').forEach(function(r){
+        var show = !q || r.getAttribute('data-task').toLowerCase().indexOf(q) !== -1;
+        r.style.display = show ? '' : 'none';
+        if(show) any = true;
+      });
+      nm.style.display = (!any && q) ? 'block' : 'none';
+    });
+    sr.appendChild(si);
+    body.appendChild(sr);
+    body.appendChild(nm);
+
+    var seen = {};
+    sec.t.forEach(function(task){
+      if(seen[task]) return; seen[task] = true;
+      var key = jKey(sec.n, task);
+      var row = document.createElement('div');
+      row.className = 'task-row';
+      row.setAttribute('data-task', task);
+      row.id = 'tr-' + key;
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.id = 'cb-' + key;
+      if(jobs[key]) { cb.checked = true; row.classList.add('sel'); }
+      cb.addEventListener('change', function(){ toggleJob(sec.n, task, cb, row); });
+      var lbl = document.createElement('label');
+      lbl.htmlFor = 'cb-' + key;
+      lbl.textContent = task;
+      row.appendChild(cb);
+      row.appendChild(lbl);
+      body.appendChild(row);
+    });
+
+    card.appendChild(hdr);
+    card.appendChild(body);
+    list.appendChild(card);
+  });
+}
+
+function globalSearch(q){
+  var lq = q.toLowerCase();
+  SECTIONS.forEach(function(sec){
+    var card = document.getElementById('sc-' + sec.n);
+    if(!card) return;
+    var any = false;
+    card.querySelectorAll('.task-row').forEach(function(r){
+      var show = !q || r.getAttribute('data-task').toLowerCase().indexOf(lq) !== -1;
+      r.style.display = show ? '' : 'none';
+      if(show) any = true;
+    });
+    card.style.display = any ? '' : 'none';
+    if(q && any) card.classList.add('open');
+    if(!q) card.style.display = '';
+  });
+}
+
+function toggleJob(section, task, cb, row){
+  var key = jKey(section, task);
+  if(cb.checked){
+    jobs[key] = {section:section, task:task, qty:1, meas:0, hrsOv:null, matsOv:null, notes:'', photos:[]};
+    row.classList.add('sel');
+  } else {
+    delete jobs[key];
+    row.classList.remove('sel');
+  }
+  var bdg = document.getElementById('sb-' + section);
+  if(bdg){
+    var cnt = 0;
+    Object.keys(jobs).forEach(function(k){ if(jobs[k].section === section) cnt++; });
+    bdg.textContent = cnt;
+    bdg.className = cnt > 0 ? 'sec-bdg on' : 'sec-bdg';
+  }
+  updateBadge();
+  save();
+}
+
+function clearAll(){
+  if(!confirm('Clear all selected jobs?')) return;
+  jobs = {};
+  buildScope();
+  updateBadge();
+  renderSum();
+  renderExp();
+}
+
+// ── Summary tab ───────────────────────────────────────────────────────────────
+function renderSum(){
+  // Preserve which cards are open before rebuilding
+  var openCards = {};
+  document.querySelectorAll('.job-card.open').forEach(function(card){
+    if(card.id) openCards[card.id] = true;
+  });
+  var scrollTop = document.getElementById('content').scrollTop;
+
+  var el = document.getElementById('sumContent');
+  el.innerHTML = '';
+  var keys = Object.keys(jobs);
+  if(keys.length === 0){
+    el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--muted)"><div style="font-size:40px;opacity:.3">📋</div><div style="font-size:16px;font-weight:600;margin-top:10px;color:var(--slate)">No jobs selected yet</div><div style="font-size:13px;margin-top:6px">Go to the Scope tab to add jobs.</div></div>';
+    return;
+  }
+  var tM=0, tH=0;
+  keys.forEach(function(k){ var j=jobs[k]; tM+=effM(j)*j.qty; tH+=effH(j)*j.qty; });
+  var tL=tH*RATE, tC=tM+tL;
+
+  var sc = document.createElement('div'); sc.className='sum-cards';
+  sc.innerHTML='<div class="sum-card full"><div class="sum-lbl">Total Budget</div><div class="sum-val blue" id="sum-total">'+fmt$(tC)+'</div></div>'
+    +'<div class="sum-card"><div class="sum-lbl">Materials</div><div class="sum-val amber" id="sum-mat">'+fmt$(tM)+'</div></div>'
+    +'<div class="sum-card"><div class="sum-lbl">Labor ('+tH.toFixed(1)+'h)</div><div class="sum-val green" id="sum-labor">'+fmt$(tL)+'</div></div>';
+  el.appendChild(sc);
+
+  // Group by section
+  var bySec = {};
+  keys.forEach(function(k){ var j=jobs[k]; if(!bySec[j.section]) bySec[j.section]=[]; bySec[j.section].push(k); });
+
+  Object.keys(bySec).forEach(function(sec){
+    var lbl = document.createElement('div'); lbl.className='sec-ttl'; lbl.textContent=sec;
+    el.appendChild(lbl);
+    bySec[sec].forEach(function(key){
+      var j = jobs[key];
+      var h=effH(j)*j.qty, m=effM(j)*j.qty, l=h*RATE, tot=m+l;
+      var mtype=qt(j.task), isM=!!mtype;
+
+      var card=document.createElement('div'); card.className='job-card';
+      card.id = 'jcard-' + key;
+
+      // Header
+      var hdr=document.createElement('div'); hdr.className='job-hdr';
+      hdr.innerHTML='<div><div class="job-title">'+j.task+'</div><div class="job-sub">'+sec+'</div></div>'
+        +'<div class="job-cost"><div class="job-total" id="jt-'+key+'">'+fmt$(tot)+'</div><div class="job-cost-sub" id="js-'+key+'">'+h.toFixed(2)+'h &middot; '+fmt$(m)+' mat</div></div>';
+      hdr.addEventListener('click', function(){ card.classList.toggle('open'); });
+
+      var body=document.createElement('div'); body.className='job-body';
+
+      // Qty / Measurement
+      var frow=document.createElement('div'); frow.className='frow';
+      var lbl2=document.createElement('label'); lbl2.textContent=isM?(mtype==='sqft'?'Total Square Feet':'Total Linear Feet'):'Quantity';
+      frow.appendChild(lbl2);
+      if(isM){
+        var mrow=document.createElement('div'); mrow.className='mrow';
+        var mi=document.createElement('input'); mi.type='number'; mi.min='0'; mi.step='1'; mi.className='finput'; mi.value=j.meas||0;
+        mi.addEventListener('input', function(){ jobs[key].meas=parseFloat(mi.value)||0; save(); updateJobCost(key); });
+        var mu=document.createElement('span'); mu.className='munit'; mu.textContent=mtype==='sqft'?'sq ft':'ln ft';
+        mrow.appendChild(mi); mrow.appendChild(mu); frow.appendChild(mrow);
+      } else {
+        var qw=document.createElement('div'); qw.style.cssText='display:flex;align-items:center;gap:8px';
+        var qm=document.createElement('button'); qm.type='button'; qm.textContent='-'; qm.style.cssText='width:32px;height:32px;border-radius:7px;border:1px solid var(--border);background:var(--bg);font-size:18px;cursor:pointer';
+        var qv=document.createElement('span'); qv.textContent=j.qty; qv.id='qv-'+key; qv.style.cssText='min-width:28px;text-align:center;font-weight:700';
+        var qp=document.createElement('button'); qp.type='button'; qp.textContent='+'; qp.style.cssText='width:32px;height:32px;border-radius:7px;border:1px solid var(--border);background:var(--bg);font-size:18px;cursor:pointer';
+        qm.addEventListener('click', function(e){ e.stopPropagation(); if(jobs[key].qty>1){jobs[key].qty--; debounceSave(); updateJobCost(key);} });
+        qp.addEventListener('click', function(e){ e.stopPropagation(); jobs[key].qty++; debounceSave(); updateJobCost(key); });
+        qw.appendChild(qm); qw.appendChild(qv); qw.appendChild(qp); frow.appendChild(qw);
+      }
+      body.appendChild(frow);
+
+      // Hours
+      var hrow=document.createElement('div'); hrow.className='frow';
+      var hlbl=document.createElement('label'); hlbl.textContent='Est. Hours'+(j.hrsOv!==null?' (custom)':'');
+      hrow.appendChild(hlbl);
+      var hw=document.createElement('div'); hw.style.cssText='display:flex;align-items:center;gap:5px';
+      var hi=document.createElement('input'); hi.type='number'; hi.min='0'; hi.step='0.25'; hi.value=h.toFixed(2);
+      hi.className='finput'+(j.hrsOv!==null?' ov':'');
+      hi.addEventListener('change', function(){ jobs[key].hrsOv=parseFloat(hi.value)||0; save(); updateJobCost(key); });
+      hw.appendChild(hi);
+      if(j.hrsOv!==null){
+        var rl=document.createElement('span'); rl.className='reset-lnk'; rl.textContent='Reset';
+        rl.addEventListener('click', function(){ jobs[key].hrsOv=null; save(); renderSum(); });
+        hw.appendChild(rl);
+      }
+      hrow.appendChild(hw); body.appendChild(hrow);
+
+      // Notes
+      var nl=document.createElement('span'); nl.className='flbl'; nl.textContent='Notes';
+      var nta=document.createElement('textarea'); nta.className='notes-ta'; nta.placeholder='Job notes…'; nta.value=j.notes||'';
+      nta.addEventListener('input', function(){ jobs[key].notes=nta.value; });
+      body.appendChild(nl); body.appendChild(nta);
+
+      // Materials
+      var ml=document.createElement('span'); ml.className='flbl'; ml.textContent='Materials'+(j.matsOv?(' (custom)'):'');
+      body.appendChild(ml);
+      var mats=effMats(j);
+      var ul=document.createElement('ul'); ul.className='mat-list';
+      if(mats.length===0){ var li=document.createElement('li'); li.style.fontStyle='italic'; li.style.color='var(--muted)'; li.textContent='None listed'; ul.appendChild(li); }
+      else { mats.forEach(function(m){ var li=document.createElement('li'); li.textContent=m; ul.appendChild(li); }); }
+      body.appendChild(ul);
+
+      var eb=document.createElement('button'); eb.type='button'; eb.style.cssText='width:100%;background:none;border:1px solid var(--border);border-radius:7px;padding:7px 12px;font-size:12px;font-family:inherit;color:var(--slate);cursor:pointer;text-align:center;margin-bottom:2px';
+      eb.textContent='✎ Edit materials';
+      var ea=document.createElement('div'); ea.className='mat-edit-wrap';
+      var eta=document.createElement('textarea'); eta.className='mat-ta'; eta.value=mats.join('\n'); eta.placeholder='One material per line…';
+      var acts=document.createElement('div'); acts.className='mat-acts';
+      var sv=document.createElement('button'); sv.type='button'; sv.className='btn-sv'; sv.textContent='Save';
+      var cn=document.createElement('button'); cn.type='button'; cn.className='btn-cn'; cn.textContent='Cancel';
+      var rs=document.createElement('button'); rs.type='button'; rs.className='btn-rs'; rs.textContent='Reset to default';
+      acts.appendChild(sv); acts.appendChild(cn); acts.appendChild(rs);
+      ea.appendChild(eta); ea.appendChild(acts);
+      eb.addEventListener('click', function(){ ea.classList.toggle('on'); });
+      cn.addEventListener('click', function(){ ea.classList.remove('on'); });
+      sv.addEventListener('click', function(){ jobs[key].matsOv=eta.value.split('\n').map(function(s){return s.trim();}).filter(Boolean); renderSum(); });
+      rs.addEventListener('click', function(){ jobs[key].matsOv=null; renderSum(); });
+      body.appendChild(eb); body.appendChild(ea);
+
+      // Photos
+      var pl=document.createElement('span'); pl.className='flbl'; pl.textContent='Photos';
+      body.appendChild(pl);
+      var pg=document.createElement('div'); pg.className='photo-grid';
+      (j.photos||[]).forEach(function(src,idx){
+        var wrap=document.createElement('div'); wrap.className='photo-thumb';
+        var img=document.createElement('img'); img.src=src;
+        var rm=document.createElement('button'); rm.type='button'; rm.className='photo-rm'; rm.textContent='x';
+        rm.addEventListener('click', function(){ jobs[key].photos.splice(idx,1); renderSum(); });
+        wrap.appendChild(img); wrap.appendChild(rm); pg.appendChild(wrap);
+      });
+      body.appendChild(pg);
+
+      var pbtns=document.createElement('div'); pbtns.className='photo-btns';
+      var camlbl=document.createElement('label'); camlbl.className='photo-btn';
+      camlbl.innerHTML='📷 Camera';
+      var cfi=document.createElement('input'); cfi.type='file'; cfi.accept='image/*'; cfi.setAttribute('capture','environment');
+      cfi.addEventListener('change', function(e){
+        Array.from(e.target.files).forEach(function(file){
+          var r=new FileReader(); r.onload=function(ev){ jobs[key].photos.push(ev.target.result); renderSum(); }; r.readAsDataURL(file);
+        });
+      });
+      camlbl.appendChild(cfi); pbtns.appendChild(camlbl);
+
+      var gallbl=document.createElement('label'); gallbl.className='photo-btn';
+      gallbl.innerHTML='🖼 Gallery';
+      var gfi=document.createElement('input'); gfi.type='file'; gfi.accept='image/*'; gfi.multiple=true;
+      gfi.addEventListener('change', function(e){
+        Array.from(e.target.files).forEach(function(file){
+          var r=new FileReader(); r.onload=function(ev){ jobs[key].photos.push(ev.target.result); renderSum(); }; r.readAsDataURL(file);
+        });
+      });
+      gallbl.appendChild(gfi); pbtns.appendChild(gallbl);
+      body.appendChild(pbtns);
+
+      card.appendChild(hdr); card.appendChild(body); el.appendChild(card);
+    });
+  });
+
+  // Restore open cards and scroll position
+  Object.keys(openCards).forEach(function(id){
+    var card = document.getElementById(id);
+    if(card) card.classList.add('open');
+  });
+  document.getElementById('content').scrollTop = scrollTop;
+}
+
+// ── Export tab ────────────────────────────────────────────────────────────────
+function renderExp(){
+  var el=document.getElementById('expList'); el.innerHTML='';
+  var keys=Object.keys(jobs); if(keys.length===0) return;
+  var tM=0,tH=0;
+  keys.forEach(function(k){ var j=jobs[k]; tM+=effM(j)*j.qty; tH+=effH(j)*j.qty; });
+  var tL=tH*RATE,tC=tM+tL;
+  var sc=document.createElement('div'); sc.className='sum-cards';
+  sc.innerHTML='<div class="sum-card full"><div class="sum-lbl">Total</div><div class="sum-val blue">'+fmt$(tC)+'</div></div>'
+    +'<div class="sum-card"><div class="sum-lbl">Materials</div><div class="sum-val amber">'+fmt$(tM)+'</div></div>'
+    +'<div class="sum-card"><div class="sum-lbl">Labor</div><div class="sum-val green">'+fmt$(tL)+'</div></div>';
+  el.appendChild(sc);
+  var lbl=document.createElement('div'); lbl.className='sec-ttl'; lbl.textContent=keys.length+' Selected Jobs'; el.appendChild(lbl);
+  keys.forEach(function(key){
+    var j=jobs[key]; var h=effH(j)*j.qty,m=effM(j)*j.qty,l=h*RATE,tot=m+l;
+    var row=document.createElement('div'); row.style.cssText='background:#fff;border-radius:8px;padding:11px 13px;margin-bottom:7px;box-shadow:0 2px 5px rgba(0,0,0,.07);display:flex;align-items:center;justify-content:space-between';
+    row.innerHTML='<div><div style="font-size:13px;font-weight:600">'+j.task+'</div><div style="font-size:11px;color:var(--muted)">'+j.section+'</div></div>'
+      +'<div style="text-align:right"><div style="font-size:14px;font-weight:700;color:var(--blue)">'+fmt$(tot)+'</div><div style="font-size:10px;color:var(--muted)">'+h.toFixed(2)+'h &middot; '+fmt$(m)+' mat</div></div>';
+    el.appendChild(row);
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+// ── Property / Scope Management ───────────────────────────────────────────────
+// Data model:
+//   localStorage: 'sfProps'       -> [{id, name, created}]  (address book)
+//   localStorage: 'sfScopes'      -> [{id, name, addr, created, updated}]  (scope list)  
+//   localStorage: 'sfActiveScope' -> scope id
+//   localStorage: 'sfJobs_<id>'   -> jobs JSON for that scope
+//   localStorage: 'sfForm_<id>'   -> {addr,prep,notes,date} for that scope
+
+var activeScope = null;  // current scope object {id, name, addr, ...}
+
+function genId() {
+  return 'sc' + Date.now() + Math.random().toString(36).substr(2,5);
+}
+
+function getScopes() {
+  try { return JSON.parse(localStorage.getItem('sfScopes') || '[]'); } catch(e){ return []; }
+}
+function saveScopes(scopes) {
+  try { localStorage.setItem('sfScopes', JSON.stringify(scopes)); } catch(e){}
+}
+
+function getProps() {
+  try { return JSON.parse(localStorage.getItem('sfProps') || '[]'); } catch(e){ return []; }
+}
+function saveProps(props) {
+  try { localStorage.setItem('sfProps', JSON.stringify(props)); } catch(e){}
+}
+
+function loadScope(scope) {
+  activeScope = scope;
+  jobs = {};
+  try {
+    var d = localStorage.getItem('sfJobs_' + scope.id);
+    if(d) {
+      var parsed = JSON.parse(d);
+      Object.keys(parsed).forEach(function(k) { parsed[k].photos=[]; jobs[k]=parsed[k]; });
+    }
+    // Load form fields
+    var form = JSON.parse(localStorage.getItem('sfForm_' + scope.id) || '{}');
+    document.getElementById('xAddr').value = form.addr || scope.addr || '';
+    document.getElementById('xPrep').value = form.prep || '';
+    document.getElementById('xNotes').value = form.notes || '';
+    document.getElementById('xDate').value = form.date || new Date().toISOString().slice(0,10);
+    var r = localStorage.getItem('sfRate');
+    if(r) { RATE = parseFloat(r); document.getElementById('rateIn').value = RATE; }
+  } catch(e) {}
+  // Update header
+  document.getElementById('hdrScopeName').textContent = scope.addr || scope.name || 'Unnamed Property';
+  localStorage.setItem('sfActiveScope', scope.id);
+  updateBadge();
+  buildScope();
+  SECTIONS.forEach(function(s){ updateSectionBadge(s.n); });
+  renderSum();
+}
+
+
+var _saveTimer = null;
+function debounceSave(){
+  if(_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(function(){ save(); }, 800);
+}
+
+function save() {
+  if(!activeScope) return;
+  try {
+    var slim = {};
+    Object.keys(jobs).forEach(function(k) {
+      var j = jobs[k];
+      slim[k] = {section:j.section,task:j.task,qty:j.qty,meas:j.meas,hrsOv:j.hrsOv,matsOv:j.matsOv,notes:j.notes,photos:[]};
+    });
+    localStorage.setItem('sfJobs_' + activeScope.id, JSON.stringify(slim));
+    localStorage.setItem('sfRate', RATE);
+    // Update scope metadata
+    var scopes = getScopes();
+    for(var i=0; i<scopes.length; i++) {
+      if(scopes[i].id === activeScope.id) {
+        scopes[i].updated = Date.now();
+        scopes[i].jobCount = Object.keys(jobs).length;
+        break;
+      }
+    }
+    saveScopes(scopes);
+  } catch(e) {}
+}
+
+function saveForm() {
+  if(!activeScope) return;
+  try {
+    localStorage.setItem('sfForm_' + activeScope.id, JSON.stringify({
+      addr: document.getElementById('xAddr').value,
+      prep: document.getElementById('xPrep').value,
+      notes: document.getElementById('xNotes').value,
+      date: document.getElementById('xDate').value
+    }));
+    // Also save address to props library
+    var addr = document.getElementById('xAddr').value.trim();
+    if(addr) {
+      var props = getProps();
+      var exists = props.some(function(p){ return p.addr === addr; });
+      if(!exists) { props.unshift({addr:addr,id:genId()}); if(props.length>20) props.pop(); saveProps(props); }
+    }
+  } catch(e) {}
+}
+
+function load() {
+  // On startup: find active scope or create default
+  var scopes = getScopes();
+  var activeId = localStorage.getItem('sfActiveScope');
+  var found = null;
+  if(activeId) { scopes.forEach(function(s){ if(s.id===activeId) found=s; }); }
+  if(!found && scopes.length > 0) found = scopes[0];
+  if(!found) {
+    // Create a default scope
+    found = {id:genId(), name:'New Property', addr:'', created:Date.now(), updated:Date.now(), jobCount:0};
+    scopes.push(found);
+    saveScopes(scopes);
+  }
+  loadScope(found);
+}
+
+// ── Property Modal ────────────────────────────────────────────────────────────
+function openPropModal() {
+  renderPropList();
+  document.getElementById('propModal').classList.add('on');
+  document.getElementById('newPropForm').style.display = 'none';
+  document.getElementById('newPropBtn').style.display = 'flex';
+}
+
+function closePropModal() {
+  document.getElementById('propModal').classList.remove('on');
+}
+
+function renderPropList() {
+  var list = document.getElementById('propList');
+  list.innerHTML = '';
+  var scopes = getScopes();
+  if(scopes.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No properties yet. Create one below.</div>';
+    return;
+  }
+  // Sort by updated desc
+  scopes.sort(function(a,b){ return (b.updated||0)-(a.updated||0); });
+  scopes.forEach(function(scope) {
+    var item = document.createElement('div');
+    item.className = 'prop-item' + (activeScope && activeScope.id===scope.id ? ' active' : '');
+    var info = document.createElement('div'); info.className='prop-item-info';
+    var name = document.createElement('div'); name.className='prop-item-name';
+    name.textContent = scope.addr || scope.name || 'Unnamed Property';
+    var meta = document.createElement('div'); meta.className='prop-item-meta';
+    var d = new Date(scope.updated||scope.created||Date.now());
+    meta.textContent = (scope.jobCount||0) + ' jobs · ' + d.toLocaleDateString();
+    info.appendChild(name); info.appendChild(meta);
+    var del = document.createElement('button'); del.type='button'; del.className='prop-item-del'; del.innerHTML='&#128465;';
+    del.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if(confirm('Delete this property and all its jobs?')) {
+        deleteScope(scope.id);
+      }
+    });
+    item.appendChild(info); item.appendChild(del);
+    item.addEventListener('click', function() {
+      loadScope(scope);
+      closePropModal();
+      goTab('Scope');
+      toast('Loaded: ' + (scope.addr || scope.name));
+    });
+    list.appendChild(item);
+  });
+}
+
+function showNewPropForm() {
+  document.getElementById('newPropForm').style.display = 'block';
+  document.getElementById('newPropBtn').style.display = 'none';
+  document.getElementById('newPropName').value = '';
+  document.getElementById('addrSuggestions').style.display = 'none';
+  setTimeout(function(){ document.getElementById('newPropName').focus(); }, 100);
+}
+
+function hideNewPropForm() {
+  document.getElementById('newPropForm').style.display = 'none';
+  document.getElementById('newPropBtn').style.display = 'flex';
+  document.getElementById('addrSuggestions').style.display = 'none';
+}
+
+function showAddrSuggestions(val) {
+  var sugBox = document.getElementById('addrSuggestions');
+  var props = getProps();
+  if(!val || props.length===0) { sugBox.style.display='none'; return; }
+  var lv = val.toLowerCase();
+  var matches = props.filter(function(p){ return p.addr.toLowerCase().indexOf(lv)!==-1; }).slice(0,5);
+  if(matches.length===0) { sugBox.style.display='none'; return; }
+  sugBox.innerHTML = '';
+  matches.forEach(function(p) {
+    var item = document.createElement('div'); item.className='addr-sug-item';
+    item.textContent = p.addr;
+    item.addEventListener('click', function() {
+      document.getElementById('newPropName').value = p.addr;
+      sugBox.style.display = 'none';
+    });
+    sugBox.appendChild(item);
+  });
+  sugBox.style.display = 'block';
+}
+
+function createProperty() {
+  var name = document.getElementById('newPropName').value.trim();
+  if(!name) { document.getElementById('newPropName').focus(); return; }
+  var scope = {id:genId(), name:name, addr:name, created:Date.now(), updated:Date.now(), jobCount:0};
+  var scopes = getScopes();
+  scopes.unshift(scope);
+  saveScopes(scopes);
+  // Save to address book
+  var props = getProps();
+  if(!props.some(function(p){ return p.addr===name; })) {
+    props.unshift({addr:name,id:genId()});
+    if(props.length>20) props.pop();
+    saveProps(props);
+  }
+  hideNewPropForm();
+  loadScope(scope);
+  closePropModal();
+  toast('Created: ' + name);
+}
+
+function deleteScope(id) {
+  var scopes = getScopes().filter(function(s){ return s.id!==id; });
+  saveScopes(scopes);
+  try { localStorage.removeItem('sfJobs_'+id); localStorage.removeItem('sfForm_'+id); } catch(e){}
+  // If deleting active scope, load another or create new
+  if(activeScope && activeScope.id===id) {
+    if(scopes.length>0) { loadScope(scopes[0]); }
+    else {
+      var ns = {id:genId(),name:'New Property',addr:'',created:Date.now(),updated:Date.now(),jobCount:0};
+      scopes.push(ns); saveScopes(scopes); loadScope(ns);
+    }
+  }
+  renderPropList();
+}
+
+// ── Share / Email ─────────────────────────────────────────────────────────────
+function buildScopeText() {
+  var keys = Object.keys(jobs);
+  if(keys.length===0) return 'No jobs selected.';
+  var tM=0, tH=0;
+  keys.forEach(function(k){ var j=jobs[k]; tM+=effM(j)*j.qty; tH+=effH(j)*j.qty; });
+  var tL=tH*RATE, tC=tM+tL;
+  var addr = document.getElementById('xAddr').value || (activeScope ? activeScope.addr : '') || 'Unknown Property';
+  var prep = document.getElementById('xPrep').value || '';
+  var date = document.getElementById('xDate').value || new Date().toISOString().slice(0,10);
+  var lines = [];
+  lines.push('RENTAL TURN SCOPE — STONE FORTRESS STAFFING');
+  lines.push('Property: ' + addr);
+  if(prep) lines.push('Prepared by: ' + prep);
+  lines.push('Date: ' + date);
+  lines.push('');
+  lines.push('BUDGET SUMMARY');
+  lines.push('Total: ' + fmt$(tC));
+  lines.push('Materials: ' + fmt$(tM));
+  lines.push('Labor (' + tH.toFixed(2) + 'h @ $' + RATE + '/hr): ' + fmt$(tL));
+  lines.push('');
+  lines.push('JOBS (' + keys.length + ' total)');
+  lines.push('---');
+  var bySec = {};
+  keys.forEach(function(k){ var j=jobs[k]; if(!bySec[j.section]) bySec[j.section]=[]; bySec[j.section].push(k); });
+  Object.keys(bySec).forEach(function(sec) {
+    lines.push('');
+    lines.push(sec.toUpperCase());
+    bySec[sec].forEach(function(key) {
+      var j=jobs[key]; var h=effH(j)*j.qty, m=effM(j)*j.qty, l=h*RATE, tot=m+l;
+      var qty = QT[nk(j.task)] ? (j.meas||0)+(QT[nk(j.task)]==='sqft'?' sq ft':' ln ft') : ('x'+j.qty);
+      lines.push('  * ' + j.task + ' (' + qty + ') — ' + fmt$(tot) + ' [' + h.toFixed(2) + 'h / ' + fmt$(m) + ' mat]');
+      if(j.notes) lines.push('    Note: ' + j.notes);
+    });
+  });
+  var notes = document.getElementById('xNotes').value;
+  if(notes) { lines.push(''); lines.push('NOTES'); lines.push(notes); }
+  return lines.join('\n');
+}
+
+function nativeShare() {
+  var text = buildScopeText();
+  var addr = document.getElementById('xAddr').value || (activeScope ? activeScope.addr : 'Property');
+  if(navigator.share) {
+    navigator.share({
+      title: 'Scope: ' + addr,
+      text: text
+    }).catch(function(){});
+  } else {
+    // Fallback: copy to clipboard
+    try {
+      navigator.clipboard.writeText(text).then(function(){ toast('Copied to clipboard!'); });
+    } catch(e) { toast('Share not available on this browser'); }
+  }
+}
+
+function emailScope() {
+  var text = buildScopeText();
+  var addr = document.getElementById('xAddr').value || (activeScope ? activeScope.addr : 'Property');
+  var subject = encodeURIComponent('Turn Scope: ' + addr);
+  var body = encodeURIComponent(text);
+  window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
+}
+
+
+
+// ── In-place cost update (no DOM rebuild) ─────────────────────────────────────
+function updateJobCost(key){
+  var j = jobs[key];
+  if(!j) return;
+  var h = effH(j) * j.qty;
+  var m = effM(j) * j.qty;
+  var l = h * RATE;
+  var tot = m + l;
+  // Update job card header costs
+  var jt = document.getElementById('jt-' + key);
+  var js = document.getElementById('js-' + key);
+  if(jt) jt.textContent = fmt$(tot);
+  if(js) js.textContent = h.toFixed(2) + 'h · ' + fmt$(m) + ' mat';
+  // Update the qty display value inside the card
+  var qv = document.getElementById('qv-' + key);
+  if(qv) qv.textContent = j.qty;
+  // Recalculate and update the top summary totals bar
+  updateSummaryTotals();
+}
+
+function updateSummaryTotals(){
+  var tM=0, tH=0;
+  Object.keys(jobs).forEach(function(k){
+    var j=jobs[k]; tM+=effM(j)*j.qty; tH+=effH(j)*j.qty;
+  });
+  var tL=tH*RATE, tC=tM+tL;
+  var el_total = document.getElementById('sum-total');
+  var el_mat   = document.getElementById('sum-mat');
+  var el_labor = document.getElementById('sum-labor');
+  if(el_total) el_total.textContent = fmt$(tC);
+  if(el_mat)   el_mat.textContent   = fmt$(tM);
+  if(el_labor) el_labor.textContent = fmt$(tL) + ' (' + tH.toFixed(1) + 'h)';
+}
+
+function smartPrint(){
+  var keys = Object.keys(jobs);
+  if(keys.length === 0){
+    alert('No jobs selected. Check off jobs on the Scope tab first.');
+    return;
+  }
+
+  // ── Build totals ─────────────────────────────────────────────────────────
+  var tM=0, tH=0;
+  keys.forEach(function(k){ var j=jobs[k]; tM+=effM(j)*j.qty; tH+=effH(j)*j.qty; });
+  var tL=tH*RATE, tC=tM+tL;
+
+  // ── Group by section ──────────────────────────────────────────────────────
+  var bySec={};
+  keys.forEach(function(k){
+    var j=jobs[k];
+    if(!bySec[j.section]) bySec[j.section]=[];
+    bySec[j.section].push(k);
+  });
+
+  // ── Property / date info ──────────────────────────────────────────────────
+  var addr = document.getElementById('xAddr').value ||
+             (activeScope ? (activeScope.addr||activeScope.name) : '') || '';
+  var prep = document.getElementById('xPrep').value || '';
+  var date = document.getElementById('xDate').value || new Date().toISOString().slice(0,10);
+
+  // ── Build HTML ────────────────────────────────────────────────────────────
+  var html = '';
+
+  // Header
+  html += '<div class="pv-header">';
+  html += '<div class="pv-co">Stone Fortress Staffing, LLC &nbsp;\u00B7&nbsp; Rental Turn Scope</div>';
+  html += '<div class="pv-title">' + (addr || 'Scope Summary') + '</div>';
+  html += '<div class="pv-meta">';
+  if(prep) html += 'Prepared by: ' + prep + '&nbsp;&nbsp;';
+  html += 'Date: ' + date;
+  html += '&nbsp;&nbsp;&nbsp;Labor rate: $' + RATE + '/hr';
+  html += '</div>';
+  html += '</div>';
+
+  // Totals bar
+  html += '<div class="pv-totals">';
+  html += '<div class="pv-total-item"><div class="pv-total-lbl">Total Budget</div><div class="pv-total-val pv-blue">' + fmt$(tC) + '</div></div>';
+  html += '<div class="pv-total-item"><div class="pv-total-lbl">Materials</div><div class="pv-total-val pv-amber">' + fmt$(tM) + '</div></div>';
+  html += '<div class="pv-total-item"><div class="pv-total-lbl">Labor (' + tH.toFixed(2) + 'h)</div><div class="pv-total-val pv-green">' + fmt$(tL) + '</div></div>';
+  html += '<div class="pv-total-item"><div class="pv-total-lbl">Jobs Selected</div><div class="pv-total-val">' + keys.length + '</div></div>';
+  html += '</div>';
+
+  // Jobs by section
+  Object.keys(bySec).forEach(function(sec){
+    html += '<div class="pv-section">' + sec + '</div>';
+
+    bySec[sec].forEach(function(key){
+      var j = jobs[key];
+      var h = effH(j)*j.qty;
+      var m = effM(j)*j.qty;
+      var l = h*RATE;
+      var tot = m+l;
+      var mtype = QT[nk(j.task)];
+      var qtyStr = mtype
+        ? ((j.meas||0) + (mtype==='sqft' ? ' sq ft' : ' ln ft'))
+        : ('x' + j.qty);
+
+      html += '<div class="pv-job">';
+
+      // Job header row
+      html += '<div class="pv-job-hdr">';
+      html += '<div><div class="pv-job-name">' + j.task + '</div>';
+      html += '<div class="pv-job-room">' + sec + ' &nbsp;\u00B7&nbsp; ' + qtyStr + '</div></div>';
+      html += '<div class="pv-job-costs">';
+      html += '<div class="pv-job-total">' + fmt$(tot) + '</div>';
+      html += '<div class="pv-job-sub">' + h.toFixed(2) + 'h labor &nbsp;\u00B7&nbsp; ' + fmt$(m) + ' mat</div>';
+      html += '</div>';
+      html += '</div>';
+
+      // Materials list
+      var mats = effMats(j);
+      if(mats && mats.length > 0){
+        html += '<div class="pv-job-body">';
+        html += '<div class="pv-mats-lbl">Materials</div>';
+        mats.forEach(function(mat){
+          html += '<div class="pv-mat">' + mat + '</div>';
+        });
+        html += '</div>';
+      }
+
+      html += '</div>'; // end pv-job
+    });
+  });
+
+  // Footer
+  html += '<div class="pv-footer">Stone Fortress Staffing, LLC &nbsp;\u00B7&nbsp; Rental Turn Scope Creator v8 &nbsp;\u00B7&nbsp; Confidential \u2014 Internal Use Only</div>';
+
+  // ── Inject and print ──────────────────────────────────────────────────────
+  document.getElementById('printView').innerHTML = html;
+  setTimeout(function(){ window.print(); }, 100);
+}
+
+try { document.getElementById('xDate').value=new Date().toISOString().slice(0,10); } catch(e){}
+load();
+
+// Save form fields on change
+document.getElementById('xAddr').addEventListener('input', saveForm);
+document.getElementById('xPrep').addEventListener('input', saveForm);
+document.getElementById('xNotes').addEventListener('input', saveForm);
+document.getElementById('xDate').addEventListener('input', saveForm);
+
+// Close modal on overlay click
+document.getElementById('propModal').addEventListener('click', function(e) {
+  if(e.target === this) closePropModal();
+});
+</script>
+
+<!-- Properties Modal -->
+<div class="modal-overlay" id="propModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">Properties</span>
+      <button class="modal-close" onclick="closePropModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div id="propList"></div>
+      <div style="margin-top:8px">
+        <button class="btn-full btn-create" onclick="showNewPropForm()" id="newPropBtn">&#43; New Property</button>
+      </div>
+      <div class="new-prop-form" id="newPropForm" style="display:none">
+        <input type="text" id="newPropName" placeholder="Property address or name" oninput="showAddrSuggestions(this.value)">
+        <div class="addr-suggestions" id="addrSuggestions"></div>
+        <button class="btn-full btn-create" onclick="createProperty()">Create Property</button>
+        <button class="btn-full btn-cancel-sm" onclick="hideNewPropForm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="printView"></div>
+</body>
+</html>
