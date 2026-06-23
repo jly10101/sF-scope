@@ -236,6 +236,7 @@ body{display:flex;flex-direction:column}
     <div class="pf"><label>Notes</label><textarea id="xNotes" rows="3" placeholder="Additional notes…"></textarea></div>
   </div>
   <button class="exp-btn exp-print" onclick="smartPrint()">&#9113; Print / Save PDF</button>
+  <button class="exp-btn" style="background:#2b6cb0;color:#fff;border:none" onclick="printPOCoverSheet()">&#128203; PO Cover Sheet</button>
   <button class="exp-btn exp-clear" onclick="clearAll()">&#128465; Clear All Jobs</button>
   <div id="expList"></div>
 </div>
@@ -1073,6 +1074,573 @@ function smartPrint(){
   // ── Inject and print ──────────────────────────────────────────────────────
   document.getElementById('printView').innerHTML = html;
   setTimeout(function(){ window.print(); }, 100);
+}
+
+// ── PO Labor Contract Cover Sheet ────────────────────────────────────────────
+
+// ── Task → PO Category mapping ──────────────────────────────────────────────
+// Each task maps to one or more PO line item keys
+const TASK_TO_PO = {
+  // 1300 Demolition
+  'cleanout':                          'demo_cleanout',
+  'demo':                              'demo_demo',
+  'demolition':                        'demo_demo',
+  'remove tree':                       'demo_demo',
+  'remove tree/shrub':                 'demo_demo',
+
+  // 1400 Water/Sewer/Ext Elec
+  'inspect/repair exterior water':     'water_sewer',
+  'replace exterior water':            'water_sewer',
+  'repair/replace well pump':          'water_sewer',
+  'replace well pressure':             'water_sewer',
+  'cap/seal well':                     'water_sewer',
+  'inspect/repair exterior sewer':     'water_sewer',
+  'pump/service septic':               'water_sewer',
+  'replace septic':                    'water_sewer',
+  'replace cleanout cap':              'water_sewer',
+  'replace exterior gfci outlet':      'water_sewer',
+  'replace electric meter':            'water_sewer',
+  'replace HVAC disconnect':           'water_sewer',
+
+  // 2100 Structural
+  'replace damaged rafter':            'structural',
+  'repair roof deck':                  'structural',
+  'replace basement stairs':           'structural',
+  'repair basement walls':             'structural',
+  'replace basement exterior access':  'structural',
+  'replace basement window':           'structural',
+
+  // 2300 Pest Control
+  'pest/rodent remediation':           'pest_control',
+  'seal attic penetrations':           'pest_control',
+  'seal roof deck penetrations':       'pest_control',
+
+  // 3300 Window/Doors (exterior)
+  'replace exterior door':             'window_doors',
+  'repair exterior door':              'window_doors',
+  'replace exterior door weatherstripping': 'window_doors',
+  'replace exterior door threshold':   'window_doors',
+  'replace exterior window':           'window_doors',
+  'repair exterior window':            'window_doors',
+  'replace exterior window screen':    'window_doors',
+  'replace exterior window lock':      'window_doors',
+
+  // 3400 Siding
+  'repair vinyl siding':               'siding',
+  'replace vinyl siding':              'siding',
+  'repair wood siding':                'siding',
+  'replace wood siding':               'siding',
+  'caulk/seal siding':                 'siding',
+  'clean/pressure wash siding':        'siding',
+
+  // 3410 Soffit
+  'repair/replace soffit':             'soffit',
+  'clear/repair soffit vents':         'soffit',
+
+  // 3411 Fascia
+  'repair/replace fascia':             'fascia',
+
+  // 3600 HVAC Rough
+  'repair/reconnect ductwork':         'hvac_rough',
+  'replace ductwork section':          'hvac_rough',
+  'repair HVAC condensate drain':      'hvac_rough',
+  'secure/level HVAC unit pad':        'hvac_rough',
+  'repair/seal HVAC line set':         'hvac_rough',
+
+  // 3700 Rough Plumbing
+  'replace laundry valve':             'rough_plumbing',
+  'replace pressure tank':             'rough_plumbing',
+  'inspect/repair water supply lines': 'rough_plumbing',
+  'replace water heater':              'rough_plumbing',
+  'repair water heater':               'rough_plumbing',
+  'replace sump pump':                 'rough_plumbing',
+  'repair sump pump':                  'rough_plumbing',
+  'inspect/repair sewer drain lines':  'rough_plumbing',
+  'unclog floor drain':                'rough_plumbing',
+  'replace floor drain cover':         'rough_plumbing',
+  'replace the rotted subfloor under toilet': 'rough_plumbing',
+  'inspect/repair gas lines':          'rough_plumbing',
+
+  // 3800 Rough Electrical
+  'replace electrical panel cover':    'rough_electrical',
+  'inspect electrical panel':          'rough_electrical',
+  'repair/replace damaged branch wiring': 'rough_electrical',
+  'repair attic wiring':               'rough_electrical',
+
+  // 3910 Gutters
+  'clean gutters':                     'gutters',
+  'repair gutters':                    'gutters',
+  'replace gutter section':            'gutters',
+  'reattach gutter':                   'gutters',
+  'replace gutter end cap':            'gutters',
+  'replace downspout':                 'gutters',
+  'reattach downspout':                'gutters',
+  'extend/redirect downspout':         'gutters',
+  'clean downspout':                   'gutters',
+
+  // 4100 Roofing
+  'repair roof':                       'roofing',
+  'replace roof section':              'roofing',
+  'replace roof vent (exterior)':      'roofing',
+  'replace ridge vent':                'roofing',
+  'repair/replace roof vent':          'roofing',
+
+  // 4200 Exterior Paint
+  'paint exterior siding':             'exterior_paint',
+  'caulk exterior window':             'exterior_paint',
+  'caulk basement window':             'exterior_paint',
+
+  // 4400 Insulation
+  'add/replace attic insulation':      'insulation',
+  'replace/reposition baffles':        'insulation',
+
+  // 5100 Drywall
+  'repair superficial wall damage':    'drywall',
+  'repair superficial ceiling damage': 'drywall',
+  'repair small holes in walls':       'drywall',
+  'repair small holes in ceiling':     'drywall',
+  'repair large wall damage':          'drywall',
+  'repair large ceiling damage':       'drywall',
+  'apply waterproof coating':          'drywall',
+
+  // 5200 Trim/Doors (interior)
+  'replace base trim':                 'trim_doors',
+  'replace casing trim':               'trim_doors',
+  'replace window jambs':              'trim_doors',
+  'repair marked door with wood putty':'trim_doors',
+  'repair interior door with wood putty':'trim_doors',
+  'replace interior door':             'trim_doors',
+  'reattach marked door':              'trim_doors',
+  'retighten bifold':                  'trim_doors',
+  'repair bifold':                     'trim_doors',
+  'replace pass thru door knobs':      'trim_doors',
+  'replace locking door knobs':        'trim_doors',
+  'replace hinge door stop':           'trim_doors',
+  'replace floor door stop':           'trim_doors',
+  'caulk trim':                        'trim_doors',
+  'reattach trim':                     'trim_doors',
+  'wood putty trim':                   'trim_doors',
+  'replace attic access door':         'trim_doors',
+  'repair/replace attic folding ladder':'trim_doors',
+
+  // 5300 Paint Interior
+  'paint walls':                       'paint_interior',
+  'paint ceiling':                     'paint_interior',
+  'paint doors':                       'paint_interior',
+  'paint interior door':               'paint_interior',
+  'interior door paint touch-up':      'paint_interior',
+  'paint trim and casing':             'paint_interior',
+  'paint windows':                     'paint_interior',
+  'paint closet door handles':         'paint_interior',
+  'paint hvac registers':              'paint_interior',
+  'paint hvac baseboard':              'paint_interior',
+
+  // 5400 Kitchen Remodel
+  'replace faucet':                    'kitchen',
+  'retighten faucet':                  'kitchen',
+  'repair dripping faucet':            'kitchen',
+  'replace strainers':                 'kitchen',
+  'caulk with 100% silicone kitchen':  'kitchen',
+  'replace double bowl sink':          'kitchen',
+  'replace single bowl sink':          'kitchen',
+  'reattach sink':                     'kitchen',
+  'replace kitchen countertop':        'kitchen',
+  'reattach countertop':               'kitchen',
+  'caulk with 100% silicone kitchen countertop': 'kitchen',
+  'repair diswasher':                  'kitchen',
+  'replace dishwasher':                'kitchen',
+  'repair refrigerator':               'kitchen',
+  'replace refrigerator':              'kitchen',
+  'repair stove':                      'kitchen',
+  'replace stove':                     'kitchen',
+  'repair microwave':                  'kitchen',
+  'replace microwave':                 'kitchen',
+  'repair wall cabinet':               'kitchen',
+  'replace wall cabinets':             'kitchen',
+  'repair base cabinet':               'kitchen',
+  'replace base cabinets':             'kitchen',
+  'design create layout':              'kitchen',
+  'retighten cabinet':                 'kitchen',
+  'replace cabinet knobs':             'kitchen',
+  'replace cabinet hinges':            'kitchen',
+  'repair pantry racks':               'kitchen',
+  'replace pantry racks':              'kitchen',
+  'replace stove outlet':              'kitchen',
+  'replace hanging light over sink':   'kitchen',
+
+  // 5520 Finish Plumbing
+  'repair drain piping':               'finish_plumbing',
+  'replace drain plumbing':            'finish_plumbing',
+  'unclog drain':                      'finish_plumbing',
+  'repair leaking supply lines':       'finish_plumbing',
+  'replace sink supply lines':         'finish_plumbing',
+  'replace sink 1/4 turn ball valves': 'finish_plumbing',
+  'recaulk vanity':                    'finish_plumbing',
+  'reattach vanity':                   'finish_plumbing',
+  'replace vanity':                    'finish_plumbing',
+  'repair toilet':                     'finish_plumbing',
+  'retighten toilet':                  'finish_plumbing',
+  'unclog toilet':                     'finish_plumbing',
+  'replace toilet':                    'finish_plumbing',
+  'replace jonny bolts':               'finish_plumbing',
+  'replace wax ring':                  'finish_plumbing',
+  'replace toilet flange':             'finish_plumbing',
+  'replace supply line':               'finish_plumbing',
+  'replace 1/4 turn ball valves':      'finish_plumbing',
+  'retighten supply lines':            'finish_plumbing',
+  'recaulk shower':                    'finish_plumbing',
+  'recaulk tub':                       'finish_plumbing',
+  'unclog shower drain':               'finish_plumbing',
+  'unclog tub drain':                  'finish_plumbing',
+  'replace shower walls':              'finish_plumbing',
+  'replace shower pan':                'finish_plumbing',
+  'replace tub surround':              'finish_plumbing',
+  'replace tub with new tub':          'finish_plumbing',
+  'recoat tub':                        'finish_plumbing',
+  'replace shower valve':              'finish_plumbing',
+  'retighten shower valve':            'finish_plumbing',
+  'repair leaking shower head':        'finish_plumbing',
+  'replace shower head':               'finish_plumbing',
+  'replace tub spout':                 'finish_plumbing',
+  'retighten tub spout':               'finish_plumbing',
+  'repair drain stopper':              'finish_plumbing',
+  'unclog laundry drain':              'finish_plumbing',
+  'replace shower valve escutcheon':   'finish_plumbing',
+
+  // 5530 Flooring
+  'reuse existing':                    'flooring',
+  'repair existing vinyl plank':       'flooring',
+  'replace flooring with click lock':  'flooring',
+  'replace transition strips':         'flooring',
+  'replace bull nose stair transition':'flooring',
+  'replace pine tred':                 'flooring',
+  'replace oak tred':                  'flooring',
+  'resupport stair tred':              'flooring',
+  'reattach stair tred':               'flooring',
+  'replace stair riser':               'flooring',
+  'reattach stair riser':              'flooring',
+
+  // 5620 Bathroom Remodel
+  'reattach medicine cabinet':         'bathroom',
+  'replace medicine cabinet':          'bathroom',
+  'retighten toilet paper holder':     'bathroom',
+  'replace toilet paper holder':       'bathroom',
+  'retighten hand towel bar':          'bathroom',
+  'replace hand towel bar':            'bathroom',
+  'replace/reattach vent fan':         'bathroom',
+  'replace vent fan':                  'bathroom',
+  'replace wall mount light above the sink': 'bathroom',
+  'replace toilet seat':               'bathroom',
+
+  // 5700 Finish Electrical
+  'replace gfci outlet':               'finish_electrical',
+  'replace 15 amp outlet':             'finish_electrical',
+  'replace 20 amp outlet':             'finish_electrical',
+  'replace dryer outlet':              'finish_electrical',
+  'replace 2 way switch':              'finish_electrical',
+  'replace 3 way switch':              'finish_electrical',
+  'replace 4 way switch':              'finish_electrical',
+  'replace gfci outlet cover':         'finish_electrical',
+  'replace outlet cover':              'finish_electrical',
+  'replace switch cover':              'finish_electrical',
+  'replace double switch cover':       'finish_electrical',
+  'replace switch and outlet cover':   'finish_electrical',
+  'replace switch and gfci cover':     'finish_electrical',
+  'replace triple switch cover':       'finish_electrical',
+  'replace double outlet cover':       'finish_electrical',
+  'replace blank electrical cover plate': 'finish_electrical',
+  'replace failed light bulbs':        'finish_electrical',
+  'replace failed bulbs':              'finish_electrical',
+  'replace ceiling light flush mount': 'finish_electrical',
+  'replace ceiling light can':         'finish_electrical',
+  'replace hanging ceiling light':     'finish_electrical',
+  'replace dining room table hanging light': 'finish_electrical',
+  'add or replace closet light':       'finish_electrical',
+  'replace junction box cover':        'finish_electrical',
+  'replace hvac return register':      'finish_electrical',
+  'replace hvac supply wall register': 'finish_electrical',
+  'replace hvac supply floor register':'finish_electrical',
+  'replace hvac supply ceiling diffuser':'finish_electrical',
+
+  // 5800 HVAC Finish/Rep
+  'replace batteries in hvac thermostat': 'hvac_finish',
+  'replace hvac thermostat':           'hvac_finish',
+  'replace hvac floor register':       'hvac_finish',
+  'replace hvac wall register':        'hvac_finish',
+  'replace hvac ceiling diffusor':     'hvac_finish',
+  'replace hvac baseboard cover':      'hvac_finish',
+  'replace hvac radiator':             'hvac_finish',
+  'replace HVAC filter':               'hvac_finish',
+
+  // 5900 R/M Labor (repairs & maintenance — catch-all interior repairs)
+  'caulk around windowpane':           'rm_labor',
+  'caulk with 100% silicone':          'rm_labor',
+  'retighten':                         'rm_labor',
+  'reattach':                          'rm_labor',
+  'repair closet racks':               'rm_labor',
+  'replace closet racks':              'rm_labor',
+  'replace batteries in smoke detector':'rm_labor',
+  'replace battery operated smoke':    'rm_labor',
+  'replace wireless interconnected smoke':'rm_labor',
+  'replace wired smoke':               'rm_labor',
+  'replace smoke':                     'rm_labor',
+  'retighten door knobs':              'rm_labor',
+  'retighten floor and hinge door stops':'rm_labor',
+  'replace basement handrail':         'rm_labor',
+  'replace attic handrail':            'rm_labor',
+  'retighten handrail':                'rm_labor',
+  'replace handrail bracket':          'rm_labor',
+  'replace handrail':                  'rm_labor',
+  'reattach nowell post':              'rm_labor',
+  'replace nowell post':               'rm_labor',
+  'reattach ballaster':                'rm_labor',
+  'replace ballaster':                 'rm_labor',
+  'repair stairs':                     'rm_labor',
+  'other':                             'rm_labor',
+
+  // 6100 Final Cleaning
+  'final clean':                       'final_cleaning',
+
+  // 6300 Driveway
+  'repair driveway':                   'driveway',
+  'replace driveway section':          'driveway',
+
+  // 6400 Patio/Walkway
+  'repair sidewalk':                   'patio_walkway',
+  'replace sidewalk section':          'patio_walkway',
+  'repair porch/patio surface':        'patio_walkway',
+  'replace porch/patio boards':        'patio_walkway',
+
+  // 6450 Deck/Porches
+  'repair/replace porch railing':      'deck_porches',
+  'repair steps':                      'deck_porches',
+  'replace step tread':                'deck_porches',
+  'repair/replace exterior handrail':  'deck_porches',
+
+  // 6490 Fences
+  'fences':                            'fences',
+
+  // 6600 Landscaping
+  'clear vegetation':                  'landscaping',
+  'trim vegetation':                   'landscaping',
+  'remove tree/shrub encroaching':     'landscaping',
+
+  // 6800 Outbuilding
+  'outbuilding':                       'outbuilding',
+};
+
+function taskToPOCategory(task) {
+  const t = task.toLowerCase().trim();
+  // Exact prefix match first (longest match wins)
+  let bestKey = null;
+  let bestLen = 0;
+  for (const [prefix, cat] of Object.entries(TASK_TO_PO)) {
+    if (t.startsWith(prefix.toLowerCase()) && prefix.length > bestLen) {
+      bestLen = prefix.length;
+      bestKey = cat;
+    }
+  }
+  if (bestKey) return bestKey;
+  // Substring fallback
+  for (const [prefix, cat] of Object.entries(TASK_TO_PO)) {
+    if (t.includes(prefix.toLowerCase())) return cat;
+  }
+  return 'rm_labor'; // default catch-all
+}
+
+const PO_LINE_ITEMS = [
+  {code:'1300', label:'Demolition: Cleanout Labor',   key:'demo_cleanout'},
+  {code:'1300', label:'Demolition: Demo Labor',       key:'demo_demo'},
+  {code:'1400', label:'Water/Sewer/Ext Elec Labor',  key:'water_sewer'},
+  {code:'2100', label:'Structural Labor',             key:'structural'},
+  {code:'2300', label:'Pest Control Labor',           key:'pest_control'},
+  {code:'3100', label:'Framing Labor',                key:'framing'},
+  {code:'3300', label:'Window/Doors Labor',           key:'window_doors'},
+  {code:'3400', label:'Siding Labor',                 key:'siding'},
+  {code:'3410', label:'Soffit Labor',                 key:'soffit'},
+  {code:'3411', label:'Fascia Labor',                 key:'fascia'},
+  {code:'3600', label:'HVAC Rough Labor',             key:'hvac_rough'},
+  {code:'3700', label:'Rough Plumbing Labor',         key:'rough_plumbing'},
+  {code:'3800', label:'Rough Electrical Labor',       key:'rough_electrical'},
+  {code:'3910', label:'Gutter Labor',                 key:'gutters'},
+  {code:'4100', label:'Roofing Labor',                key:'roofing'},
+  {code:'4200', label:'Exterior Paint Labor',         key:'exterior_paint'},
+  {code:'4400', label:'Insulation Labor',             key:'insulation'},
+  {code:'5100', label:'Drywall Labor',                key:'drywall'},
+  {code:'5200', label:'Trim/Doors Labor',             key:'trim_doors'},
+  {code:'5300', label:'Paint Interior Labor',         key:'paint_interior'},
+  {code:'5400', label:'Kitchen Remodel Labor',        key:'kitchen'},
+  {code:'5520', label:'Finish Plumbing Labor',        key:'finish_plumbing'},
+  {code:'5530', label:'Flooring Labor',               key:'flooring'},
+  {code:'5620', label:'Bathroom Remodel Labor',       key:'bathroom'},
+  {code:'5700', label:'Finish Electrical Labor',      key:'finish_electrical'},
+  {code:'5800', label:'HVAC Finish/Rep Labor',        key:'hvac_finish'},
+  {code:'5900', label:'Labor R/M Labor',              key:'rm_labor'},
+  {code:'6100', label:'Final Cleaning Labor',         key:'final_cleaning'},
+  {code:'6300', label:'Driveway Labor',               key:'driveway'},
+  {code:'6400', label:'Patio/Walkway Labor',          key:'patio_walkway'},
+  {code:'6450', label:'Deck/Porches Labor',           key:'deck_porches'},
+  {code:'6490', label:'Fences Labor',                 key:'fences'},
+  {code:'6600', label:'Landscaping Labor',            key:'landscaping'},
+  {code:'6600', label:'Mowing Labor',                 key:'mowing'},
+  {code:'6600', label:'Snow Removal Labor',           key:'snow_removal'},
+  {code:'6800', label:'Outbuilding Labor',            key:'outbuilding'},
+];
+
+function printPOCoverSheet(){
+  if(Object.keys(jobs).length===0){
+    alert('No jobs selected.');
+    return;
+  }
+
+  // ── Accumulate labor dollars by PO category ───────────────────────────────
+  const amounts={};
+  PO_LINE_ITEMS.forEach(item=>{ amounts[item.key]=0; });
+
+  Object.keys(jobs).forEach(function(key){ var job=jobs[key];
+    if(nk(job.task)==='other') return;
+    const hrs=effH(job)*job.qty;
+    const labor=hrs*RATE;
+    if(labor<=0) return;
+    const cat=taskToPOCategory(job.task);
+    amounts[cat]=(amounts[cat]||0)+labor;
+  });
+
+  const grandTotal=Object.values(amounts).reduce((a,b)=>a+b,0);
+
+  // ── Build print window ────────────────────────────────────────────────────
+  const addr=document.getElementById('xAddr').value||'';
+  const prep=document.getElementById('xPrep').value||'';
+  const date=document.getElementById('xDate').value||new Date().toISOString().slice(0,10);
+  const scope=document.getElementById('xNotes').value||'See attached scope summary';
+
+  const fmtAmt=n=>n>0?'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
+
+  // Build 3-column table rows (12 per column)
+  const perCol=12;
+  const col1=PO_LINE_ITEMS.slice(0,perCol);
+  const col2=PO_LINE_ITEMS.slice(perCol,perCol*2);
+  const col3=PO_LINE_ITEMS.slice(perCol*2);
+  while(col3.length<perCol) col3.push({code:'',label:'',key:''});
+
+  let tableRows='';
+  for(let r=0;r<perCol;r++){
+    const c1=col1[r]||{}, c2=col2[r]||{}, c3=col3[r]||{};
+    const a1=c1.key?amounts[c1.key]||0:0;
+    const a2=c2.key?amounts[c2.key]||0:0;
+    const a3=c3.key?amounts[c3.key]||0:0;
+    const hl1=a1>0?'background:#fdf0eb;font-weight:600;':'';
+    const hl2=a2>0?'background:#fdf0eb;font-weight:600;':'';
+    const hl3=a3>0?'background:#fdf0eb;font-weight:600;':'';
+    tableRows+=`<tr>
+      <td style="${hl1}">${c1.code?c1.code+' '+c1.label:''}</td>
+      <td class="amt" style="${hl1}">${fmtAmt(a1)}</td>
+      <td style="${hl2}">${c2.code?c2.code+' '+c2.label:''}</td>
+      <td class="amt" style="${hl2}">${fmtAmt(a2)}</td>
+      <td style="${hl3}">${c3.code?c3.code+' '+c3.label:''}</td>
+      <td class="amt" style="${hl3}">${fmtAmt(a3)}</td>
+    </tr>`;
+  }
+
+  const html=`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>PO Labor Contract Cover Sheet</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:9pt;color:#000;background:#fff;padding:0.45in}
+  .co{font-size:11pt;font-weight:700;color:#2d3748}
+  .title{font-size:13pt;font-weight:700;margin-bottom:10pt;padding-bottom:6pt;border-bottom:2pt solid #000}
+  table{width:100%;border-collapse:collapse}
+  .header-table td{border:0.75pt solid #000;padding:4pt 5pt;vertical-align:middle}
+  .lbl{font-weight:700;font-size:8pt;white-space:nowrap}
+  .po-bar td{border:0.75pt solid #000;padding:4pt 6pt;vertical-align:middle}
+  .grand{font-size:13pt;font-weight:700;text-align:right}
+  .line-table{margin-top:5pt}
+  .line-table th{background:#2d3748;color:#fff;font-size:8pt;padding:4pt 5pt;text-align:center;border:0.75pt solid #2d3748}
+  .line-table td{font-size:8pt;padding:3pt 4pt;border:0.5pt solid #ccc;vertical-align:middle}
+  .line-table tr:nth-child(even) td{background:#f8f8f8}
+  .amt{text-align:right;font-variant-numeric:tabular-nums;min-width:58pt}
+  .sig-row td{padding:10pt 6pt 2pt;border:none;font-size:8pt}
+  .footer{margin-top:8pt;border-top:0.5pt solid #aaa;padding-top:4pt;text-align:center;font-size:7pt;color:#888}
+  @media print{body{padding:0.4in}button{display:none!important}}
+</style>
+</head>
+<body>
+<button onclick="window.print()" style="position:fixed;top:10px;right:10px;background:#2d3748;color:#fff;border:none;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;border-radius:4px">⎙ Print / Save PDF</button>
+
+<div class="co">STONE FORTRESS STAFFING, LLC</div>
+<div class="title">Purchase Order Labor Contract — COVER SHEET</div>
+
+<table class="header-table" style="margin-bottom:4pt">
+  <tr>
+    <td class="lbl" style="width:16%">DATE REQUEST:</td>
+    <td style="width:34%">${date}</td>
+    <td class="lbl" style="width:16%">REQUESTOR:</td>
+    <td style="width:34%">${prep}</td>
+  </tr>
+  <tr>
+    <td class="lbl">START DATE</td>
+    <td></td>
+    <td class="lbl">END DATE</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td class="lbl">COMPANY NAME</td>
+    <td colspan="3"></td>
+  </tr>
+  <tr>
+    <td class="lbl">PROJECT ADDRESS</td>
+    <td colspan="3">${addr}</td>
+  </tr>
+  <tr>
+    <td class="lbl">CITY, STATE</td>
+    <td colspan="3"></td>
+  </tr>
+  <tr>
+    <td class="lbl" style="vertical-align:top">SUMMARY OF SCOPE<br>OF WORK<br>(ATTACHMENT)</td>
+    <td colspan="3" style="height:48pt;vertical-align:top">${scope}</td>
+  </tr>
+</table>
+
+<table class="po-bar" style="margin-bottom:4pt">
+  <tr>
+    <td class="lbl" style="width:40%">PURCHASE ORDER #&nbsp;&nbsp; ______ ______ ______ ______</td>
+    <td class="lbl" style="width:20%">DATE: &nbsp; ${date}</td>
+    <td class="lbl" style="width:22%">GRAND TOTAL AMOUNT:</td>
+    <td class="grand" style="width:18%">${fmtAmt(grandTotal)||'$0.00'}</td>
+  </tr>
+</table>
+
+<table class="line-table">
+  <thead>
+    <tr>
+      <th style="width:28%">SCOPE OF WORK</th><th style="width:8%">AMOUNT</th>
+      <th style="width:28%">SCOPE OF WORK</th><th style="width:8%">AMOUNT</th>
+      <th style="width:28%">SCOPE OF WORK</th><th style="width:8%">AMOUNT</th>
+    </tr>
+  </thead>
+  <tbody>${tableRows}</tbody>
+</table>
+
+<table class="sig-row" style="margin-top:8pt">
+  <tr>
+    <td style="width:17%"><b>Requested By:</b></td>
+    <td style="width:30%;border-bottom:1pt solid #000">&nbsp;</td>
+    <td style="width:6%"></td>
+    <td style="width:15%"><b>Approved By:</b></td>
+    <td style="width:30%;border-bottom:1pt solid #000">&nbsp;</td>
+    <td style="width:2%"></td>
+  </tr>
+</table>
+
+<div class="footer">Stone Fortress Staffing, LLC &nbsp;·&nbsp; Purchase Order Labor Contract &nbsp;·&nbsp; Confidential — Internal Use Only</div>
+</body></html>`;
+
+  const win=window.open('','_blank','width=900,height=700');
+  win.document.write(html);
+  win.document.close();
 }
 
 try { document.getElementById('xDate').value=new Date().toISOString().slice(0,10); } catch(e){}
