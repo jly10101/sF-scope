@@ -263,13 +263,15 @@ function setRate(v){ var r=parseFloat(v); if(r>0){ RATE=r; renderSum(); renderEx
 function jKey(s,t){ return s+'||'+t; }
 function fmt$(n){ return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function goTab(t){
+  var alreadyOn = document.getElementById('p'+t).classList.contains('on');
   ['Scope','Sum','Exp'].forEach(function(x){
     document.getElementById('p'+x).classList.remove('on');
     document.getElementById('t'+x).classList.remove('on');
   });
   document.getElementById('p'+t).classList.add('on');
   document.getElementById('t'+t).classList.add('on');
-  if(t==='Sum') renderSum();
+  // Only render if switching TO the tab (not already on it)
+  if(t==='Sum' && !alreadyOn) renderSum();
   if(t==='Exp') renderExp();
 }
 
@@ -419,12 +421,13 @@ function toggleJob(section, task, cb, row){
   }
   var bdg = document.getElementById('sb-' + section);
   if(bdg){
-    var c = 0;
-    Object.keys(jobs).forEach(function(k){ if(jobs[k].section === section) c++; });
-    bdg.textContent = c;
-    bdg.className = c > 0 ? 'sec-bdg on' : 'sec-bdg';
+    var cnt = 0;
+    Object.keys(jobs).forEach(function(k){ if(jobs[k].section === section) cnt++; });
+    bdg.textContent = cnt;
+    bdg.className = cnt > 0 ? 'sec-bdg on' : 'sec-bdg';
   }
   updateBadge();
+  save();
 }
 
 function clearAll(){
@@ -438,6 +441,13 @@ function clearAll(){
 
 // ── Summary tab ───────────────────────────────────────────────────────────────
 function renderSum(){
+  // Preserve which cards are open before rebuilding
+  var openCards = {};
+  document.querySelectorAll('.job-card.open').forEach(function(card){
+    if(card.id) openCards[card.id] = true;
+  });
+  var scrollTop = document.getElementById('content').scrollTop;
+
   var el = document.getElementById('sumContent');
   el.innerHTML = '';
   var keys = Object.keys(jobs);
@@ -584,6 +594,13 @@ function renderSum(){
       card.appendChild(hdr); card.appendChild(body); el.appendChild(card);
     });
   });
+
+  // Restore open cards and scroll position
+  Object.keys(openCards).forEach(function(id){
+    var card = document.getElementById(id);
+    if(card) card.classList.add('open');
+  });
+  document.getElementById('content').scrollTop = scrollTop;
 }
 
 // ── Export tab ────────────────────────────────────────────────────────────────
