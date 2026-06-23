@@ -196,6 +196,16 @@ body{display:flex;flex-direction:column}
   .pv-mat::before{ content:'•'; position:absolute; left:2pt; color:#c8542a }
   .pv-footer{ margin-top:20pt; padding-top:8pt; border-top:1pt solid #ccc;
     font-size:8pt; color:#888; text-align:center }
+
+  /* Materials aggregate */
+  .pv-agg{ margin-top:16pt; border-top:2pt solid #000; padding-top:10pt; }
+  .pv-agg-title{ font-size:13pt; font-weight:700; margin-bottom:6pt; color:#000; }
+  .pv-agg-subtitle{ font-size:8pt; color:#666; font-style:italic; margin-bottom:10pt; }
+  .pv-agg-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0; }
+  .pv-agg-item{ font-size:8.5pt; color:#1a1a1a; padding:3pt 6pt 3pt 16pt; position:relative; border-bottom:0.5pt solid #eee; }
+  .pv-agg-item::before{ content:'\2022'; position:absolute; left:5pt; color:#c8542a; font-weight:700; }
+  .pv-agg-source{ font-size:7pt; color:#888; font-style:italic; margin-left:4pt; }
+  .pv-agg-total{ margin-top:8pt; padding:6pt 8pt; background:#f2f2f2; font-size:9pt; font-weight:700; border:0.5pt solid #ccc; }
 }
 @media screen{
   #printView{ display:none }
@@ -978,6 +988,68 @@ function updateSummaryTotals(){
   if(el_labor) el_labor.textContent = fmt$(tL) + ' (' + tH.toFixed(1) + 'h)';
 }
 
+
+// ── Build materials aggregate HTML block ─────────────────────────────────────
+function buildMaterialsAggregateHTML(jobsObj, effMatsFunc, nkFunc) {
+  // Collect all materials across all jobs
+  // Key: normalized material name → {displayName, jobs: [jobName...], count}
+  var allMats = {};
+
+  Object.keys(jobsObj).forEach(function(key) {
+    var j = jobsObj[key];
+    if(nkFunc(j.task) === 'other') return;
+    var mats = effMatsFunc(j);
+    if(!mats || mats.length === 0) return;
+    mats.forEach(function(mat) {
+      // Normalize: lowercase, strip trailing punctuation for dedup key
+      var norm = mat.toLowerCase().replace(/[().,\-–]+$/, '').trim();
+      // Strip parenthetical notes for grouping: "Roller covers (3/8\" nap)" → "roller covers"
+      var groupKey = norm.replace(/\s*\([^)]*\)/g, '').trim();
+      if(!allMats[groupKey]) {
+        allMats[groupKey] = { display: mat, jobs: [], count: 0 };
+      }
+      allMats[groupKey].count += (j.qty || 1);
+      // Add job source if not already listed
+      var src = j.task + ' — ' + j.section;
+      if(allMats[groupKey].jobs.indexOf(src) === -1) {
+        allMats[groupKey].jobs.push(src);
+      }
+    });
+  });
+
+  var keys = Object.keys(allMats);
+  if(keys.length === 0) return '';
+
+  // Sort alphabetically
+  keys.sort(function(a,b){ return a.localeCompare(b); });
+
+  var totalItems = keys.length;
+  var html = '';
+
+  html += '<div class="pv-agg">';
+  html += '<div class="pv-agg-title">Materials List — Aggregate</div>';
+  html += '<div class="pv-agg-subtitle">All materials across all selected jobs, deduplicated. Quantities and specifications to be confirmed on site.</div>';
+  html += '<div class="pv-agg-grid">';
+
+  keys.forEach(function(k) {
+    var item = allMats[k];
+    html += '<div class="pv-agg-item">';
+    html += item.display;
+    if(item.jobs.length <= 3) {
+      html += '<span class="pv-agg-source">(' + item.jobs.join('; ') + ')</span>';
+    } else {
+      html += '<span class="pv-agg-source">(' + item.jobs.slice(0,2).join('; ') + ' + ' + (item.jobs.length - 2) + ' more)</span>';
+    }
+    html += '</div>';
+  });
+
+  html += '</div>';
+  html += '<div class="pv-agg-total">' + totalItems + ' unique material items across ' + Object.keys(jobsObj).length + ' jobs</div>';
+  html += '</div>';
+
+  return html;
+}
+
 function smartPrint(){
   var keys = Object.keys(jobs);
   if(keys.length === 0){
@@ -1069,6 +1141,9 @@ function smartPrint(){
   });
 
   // Footer
+  // ── Materials aggregate ──────────────────────────────────────
+  html += buildMaterialsAggregateHTML(jobs, effMats, nk);
+
   html += '<div class="pv-footer">Stone Fortress Staffing, LLC &nbsp;\u00B7&nbsp; Rental Turn Scope Creator v8 &nbsp;\u00B7&nbsp; Confidential \u2014 Internal Use Only</div>';
 
   // ── Inject and print ──────────────────────────────────────────────────────
