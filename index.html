@@ -263,15 +263,13 @@ function setRate(v){ var r=parseFloat(v); if(r>0){ RATE=r; renderSum(); renderEx
 function jKey(s,t){ return s+'||'+t; }
 function fmt$(n){ return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function goTab(t){
-  var alreadyOn = document.getElementById('p'+t).classList.contains('on');
   ['Scope','Sum','Exp'].forEach(function(x){
     document.getElementById('p'+x).classList.remove('on');
     document.getElementById('t'+x).classList.remove('on');
   });
   document.getElementById('p'+t).classList.add('on');
   document.getElementById('t'+t).classList.add('on');
-  // Only render if switching TO the tab (not already on it)
-  if(t==='Sum' && !alreadyOn) renderSum();
+  if(t==='Sum') renderSum();
   if(t==='Exp') renderExp();
 }
 
@@ -482,8 +480,15 @@ function renderSum(){
 
       // Header
       var hdr=document.createElement('div'); hdr.className='job-hdr';
-      hdr.innerHTML='<div><div class="job-title">'+j.task+'</div><div class="job-sub">'+sec+'</div></div>'
-        +'<div class="job-cost"><div class="job-total" id="jt-'+key+'">'+fmt$(tot)+'</div><div class="job-cost-sub" id="js-'+key+'">'+h.toFixed(2)+'h &middot; '+fmt$(m)+' mat</div></div>';
+      var hdrLeft=document.createElement('div');
+      var hdrTitle=document.createElement('div'); hdrTitle.className='job-title'; hdrTitle.textContent=j.task;
+      var hdrSub=document.createElement('div'); hdrSub.className='job-sub'; hdrSub.textContent=sec;
+      hdrLeft.appendChild(hdrTitle); hdrLeft.appendChild(hdrSub);
+      var hdrCost=document.createElement('div'); hdrCost.className='job-cost';
+      var hdrTotal=document.createElement('div'); hdrTotal.className='job-total'; hdrTotal.id='jt-'+key; hdrTotal.textContent=fmt$(tot);
+      var hdrSub2=document.createElement('div'); hdrSub2.className='job-cost-sub'; hdrSub2.id='js-'+key; hdrSub2.textContent=h.toFixed(2)+'h · '+fmt$(m)+' mat';
+      hdrCost.appendChild(hdrTotal); hdrCost.appendChild(hdrSub2);
+      hdr.appendChild(hdrLeft); hdr.appendChild(hdrCost);
       hdr.addEventListener('click', function(){ card.classList.toggle('open'); });
 
       var body=document.createElement('div'); body.className='job-body';
