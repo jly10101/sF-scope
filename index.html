@@ -2363,6 +2363,12 @@ try { document.getElementById('xDate').value=new Date().toISOString().slice(0,10
 loadJobs();
 buildScope();
 updateBadge();
+// Debug: show section count in search placeholder
+(function(){
+  var list = document.getElementById('scopeList');
+  var srch = document.querySelector('.search-box input');
+  if(srch) srch.placeholder = 'Rooms loaded: ' + list.children.length + ' — tap to search';
+})();
 </script>
 <div id="printView"></div>
 </body>
