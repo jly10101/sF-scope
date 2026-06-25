@@ -1242,13 +1242,13 @@ function updateBadge(){ document.getElementById('totalBadge').textContent = coun
 // ── Build scope tab ───────────────────────────────────────────────────────────
 
 // ── Room subsection grouping ──────────────────────────────────────────────────
-const SUBSECTION_ORDER = [
+var SUBSECTION_ORDER = [
   'Walls & Ceiling','Windows & Doors','Trim & Millwork','Flooring','Paint',
   'Plumbing','Electrical','HVAC & Registers','Cabinets & Storage',
   'Appliances','Exterior & Structure','Insulation & Attic','Safety','General & Other'
 ];
 
-const SUBSECTION_KEYWORDS = {
+var SUBSECTION_KEYWORDS = {
   'Walls & Ceiling': ['repair superficial wall','repair superficial ceiling','repair small holes in walls','repair small holes in ceiling','repair large wall','repair large ceiling','apply waterproof coating','paint walls','paint ceiling','repair basement walls'],
   'Windows & Doors': ['caulk around windowpane','caulk exterior window','caulk basement window','replace window jambs','replace exterior window','repair exterior window','replace exterior window screen','replace exterior window lock','paint windows','replace interior door','repair marked door','repair interior door','reattach marked door','retighten bifold','repair bifold','replace exterior door','repair exterior door','replace exterior door weatherstripping','replace exterior door threshold','paint interior door','interior door paint touch-up','replace attic access door','repair/replace attic folding ladder','doorbell','replace mailbox','repair/secure mailbox'],
   'Trim & Millwork': ['replace base trim','replace casing trim','caulk trim','reattach trim','wood putty trim','replace pass thru door knobs','replace locking door knobs','retighten door knobs','replace hinge door stop','replace floor door stop','replace handrail bracket','replace handrail','retighten handrail','replace nowell post','reattach nowell post','replace ballaster','reattach ballaster','replace pine tred','replace oak tred','replace stair riser','resupport stair tred','reattach stair tred','reattach stair riser','replace attic handrail','replace basement handrail','repair/replace exterior handrail','repair/replace porch railing','repair steps','replace step tread'],
@@ -1795,7 +1795,7 @@ function smartPrint(){
 
 // ── Task → PO Category mapping ──────────────────────────────────────────────
 // Each task maps to one or more PO line item keys
-const TASK_TO_PO = {
+var TASK_TO_PO = {
   // 1300 Demolition
   'cleanout':                          'demo_cleanout',
   'demo':                              'demo_demo',
@@ -2145,25 +2145,26 @@ const TASK_TO_PO = {
 };
 
 function taskToPOCategory(task) {
-  const t = task.toLowerCase().trim();
-  // Exact prefix match first (longest match wins)
-  let bestKey = null;
-  let bestLen = 0;
-  for (const [prefix, cat] of Object.entries(TASK_TO_PO)) {
-    if (t.startsWith(prefix.toLowerCase()) && prefix.length > bestLen) {
+  var t = task.toLowerCase().trim();
+  var keys = Object.keys(TASK_TO_PO);
+  var bestKey = null;
+  var bestLen = 0;
+  for (var i = 0; i < keys.length; i++) {
+    var prefix = keys[i];
+    var cat = TASK_TO_PO[prefix];
+    if (t.indexOf(prefix.toLowerCase()) === 0 && prefix.length > bestLen) {
       bestLen = prefix.length;
       bestKey = cat;
     }
   }
   if (bestKey) return bestKey;
-  // Substring fallback
-  for (const [prefix, cat] of Object.entries(TASK_TO_PO)) {
-    if (t.includes(prefix.toLowerCase())) return cat;
+  for (var j = 0; j < keys.length; j++) {
+    if (t.indexOf(keys[j].toLowerCase()) !== -1) return TASK_TO_PO[keys[j]];
   }
-  return 'rm_labor'; // default catch-all
+  return 'rm_labor';
 }
 
-const PO_LINE_ITEMS = [
+var PO_LINE_ITEMS = [
   {code:'1300', label:'Demolition: Cleanout Labor',   key:'demo_cleanout'},
   {code:'1300', label:'Demolition: Demo Labor',       key:'demo_demo'},
   {code:'1400', label:'Water/Sewer/Ext Elec Labor',  key:'water_sewer'},
@@ -2209,44 +2210,44 @@ function printPOCoverSheet(){
   }
 
   // ── Accumulate labor dollars by PO category ───────────────────────────────
-  const amounts={};
-  PO_LINE_ITEMS.forEach(item=>{ amounts[item.key]=0; });
+  var amounts={};
+  PO_LINE_ITEMS.forEach(function(item){ amounts[item.key]=0; });
 
   Object.keys(jobs).forEach(function(key){ var job=jobs[key];
     if(nk(job.task)==='other') return;
-    const hrs=effH(job)*job.qty;
-    const labor=hrs*RATE;
+    var hrs=effH(job)*job.qty;
+    var labor=hrs*RATE;
     if(labor<=0) return;
-    const cat=taskToPOCategory(job.task);
+    var cat=taskToPOCategory(job.task);
     amounts[cat]=(amounts[cat]||0)+labor;
   });
 
-  const grandTotal=Object.values(amounts).reduce((a,b)=>a+b,0);
+  var amtVals=Object.keys(amounts).map(function(k){return amounts[k];}); var grandTotal=amtVals.reduce(function(a,b){return a+b;},0);
 
   // ── Build print window ────────────────────────────────────────────────────
-  const addr=document.getElementById('xAddr').value||'';
-  const prep=document.getElementById('xPrep').value||'';
-  const date=document.getElementById('xDate').value||new Date().toISOString().slice(0,10);
-  const scope=document.getElementById('xNotes').value||'See attached scope summary';
+  var addr=document.getElementById('xAddr').value||'';
+  var prep=document.getElementById('xPrep').value||'';
+  var date=document.getElementById('xDate').value||new Date().toISOString().slice(0,10);
+  var scope=document.getElementById('xNotes').value||'See attached scope summary';
 
-  const fmtAmt=n=>n>0?'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
+  function fmtAmt(n){ return n>0?'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):''; }
 
   // Build 3-column table rows (12 per column)
-  const perCol=12;
-  const col1=PO_LINE_ITEMS.slice(0,perCol);
-  const col2=PO_LINE_ITEMS.slice(perCol,perCol*2);
-  const col3=PO_LINE_ITEMS.slice(perCol*2);
+  var perCol=12;
+  var col1=PO_LINE_ITEMS.slice(0,perCol);
+  var col2=PO_LINE_ITEMS.slice(perCol,perCol*2);
+  var col3=PO_LINE_ITEMS.slice(perCol*2);
   while(col3.length<perCol) col3.push({code:'',label:'',key:''});
 
-  let tableRows='';
-  for(let r=0;r<perCol;r++){
-    const c1=col1[r]||{}, c2=col2[r]||{}, c3=col3[r]||{};
-    const a1=c1.key?amounts[c1.key]||0:0;
-    const a2=c2.key?amounts[c2.key]||0:0;
-    const a3=c3.key?amounts[c3.key]||0:0;
-    const hl1=a1>0?'background:#fdf0eb;font-weight:600;':'';
-    const hl2=a2>0?'background:#fdf0eb;font-weight:600;':'';
-    const hl3=a3>0?'background:#fdf0eb;font-weight:600;':'';
+  var tableRows='';
+  for(var r=0;r<perCol;r++){
+    var c1=col1[r]||{}, c2=col2[r]||{}, c3=col3[r]||{};
+    var a1=c1.key?amounts[c1.key]||0:0;
+    var a2=c2.key?amounts[c2.key]||0:0;
+    var a3=c3.key?amounts[c3.key]||0:0;
+    var hl1=a1>0?'background:#fdf0eb;font-weight:600;':'';
+    var hl2=a2>0?'background:#fdf0eb;font-weight:600;':'';
+    var hl3=a3>0?'background:#fdf0eb;font-weight:600;':'';
     tableRows+=`<tr>
       <td style="${hl1}">${c1.code?c1.code+' '+c1.label:''}</td>
       <td class="amt" style="${hl1}">${fmtAmt(a1)}</td>
@@ -2257,7 +2258,7 @@ function printPOCoverSheet(){
     </tr>`;
   }
 
-  const html=`<!DOCTYPE html>
+  var html=`<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -2353,7 +2354,7 @@ function printPOCoverSheet(){
 <div class="footer">Stone Fortress Staffing, LLC &nbsp;·&nbsp; Purchase Order Labor Contract &nbsp;·&nbsp; Confidential — Internal Use Only</div>
 </body></html>`;
 
-  const win=window.open('','_blank','width=900,height=700');
+  var win=window.open('','_blank','width=900,height=700');
   win.document.write(html);
   win.document.close();
 }
