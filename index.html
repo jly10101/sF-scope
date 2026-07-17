@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SF Scope Creator v10.1</title>
+<title>SF Scope Creator v10.2</title>
 <style>
 :root{
   --brand:#1B2B3A;--accent:#C85A2A;--accent2:#E8A87C;
@@ -181,6 +181,68 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 .empty-icon{font-size:48px;margin-bottom:14px;opacity:.35}
 .empty-title{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:6px}
 .empty-sub{font-size:14px;color:var(--muted);line-height:1.5}
+
+/* ── Job edit bottom sheet ──────────────────────────────────────────────── */
+.sheet-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;
+  opacity:0;transition:opacity .25s;pointer-events:none;
+}
+.sheet-overlay.on{opacity:1;pointer-events:all}
+.sheet{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);border-radius:20px 20px 0 0;
+  z-index:101;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);
+  max-height:85vh;display:flex;flex-direction:column;
+  max-width:430px;margin:0 auto;
+  box-shadow:0 -4px 32px rgba(0,0,0,.18);
+}
+.sheet.on{transform:translateY(0)}
+.sheet-handle{
+  width:36px;height:4px;background:var(--border2);border-radius:2px;
+  margin:10px auto 0;flex-shrink:0;
+}
+.sheet-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px 10px;flex-shrink:0;
+  border-bottom:1px solid var(--border);
+}
+.sheet-title{font-size:16px;font-weight:700;color:var(--ink);flex:1;margin-right:10px;line-height:1.3}
+.sheet-room{font-size:12px;color:var(--muted);margin-top:2px}
+.sheet-close{
+  width:30px;height:30px;border-radius:50%;background:var(--surface2);
+  border:none;cursor:pointer;font-size:16px;color:var(--muted);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 18px;flex:1}
+.sheet-section{margin-bottom:18px}
+.sheet-lbl{
+  font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px;display:block;
+}
+.sheet-footer{
+  padding:12px 18px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0));
+  flex-shrink:0;border-top:1px solid var(--border);
+  background:var(--surface);
+}
+.done-btn{
+  width:100%;padding:15px;border-radius:var(--radius);border:none;
+  background:var(--ok);color:#fff;font-size:16px;font-weight:700;
+  cursor:pointer;font-family:inherit;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.done-btn:active{opacity:.85}
+.sheet-meas{
+  display:flex;align-items:center;gap:10px;
+}
+.sheet-meas input{
+  flex:1;border:1.5px solid var(--border);border-radius:8px;
+  padding:10px 12px;font-size:20px;font-weight:700;font-family:inherit;
+  color:var(--ink);outline:none;text-align:center;
+}
+.sheet-meas input:focus{border-color:var(--accent)}
+.sheet-meas-unit{font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap}
+
 @media print{
   html,body{height:auto!important;overflow:visible!important;background:#fff}
   body>*{display:none!important}
@@ -222,7 +284,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 <div class="hdr">
   <div class="hdr-brand">
     <div class="hdr-title">Stone <em>Fortress</em></div>
-    <div class="hdr-sub">Rental Turn Scope &nbsp;v10.1</div>
+    <div class="hdr-sub">Rental Turn Scope &nbsp;v10.2</div>
   </div>
   <div class="hdr-right">
     <div class="rate-wrap">
@@ -291,6 +353,48 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
     Export
   </button>
 </div>
+
+<!-- Job edit bottom sheet -->
+<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
+<div class="sheet" id="jobSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-hdr">
+    <div>
+      <div class="sheet-title" id="sheetTitle">Job name</div>
+      <div class="sheet-room" id="sheetRoom">Room</div>
+    </div>
+    <button class="sheet-close" onclick="closeSheet()">&#x2715;</button>
+  </div>
+  <div class="sheet-body">
+    <!-- Qty / Measurement -->
+    <div class="sheet-section" id="sheetQtySection">
+      <span class="sheet-lbl" id="sheetQtyLbl">Quantity</span>
+      <div id="sheetQtyWrap"></div>
+    </div>
+    <!-- Notes -->
+    <div class="sheet-section">
+      <span class="sheet-lbl">Notes</span>
+      <textarea class="notes-ta" id="sheetNotes" placeholder="Add notes, observations, or special instructions&#8230;" rows="3"></textarea>
+    </div>
+    <!-- Photos -->
+    <div class="sheet-section">
+      <span class="sheet-lbl">Photos</span>
+      <div class="photo-grid" id="sheetPhotoGrid"></div>
+      <label class="photo-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Add Photo
+        <input type="file" accept="image/*" multiple onchange="sheetAddPhotos(this)">
+      </label>
+    </div>
+  </div>
+  <div class="sheet-footer">
+    <button class="done-btn" onclick="closeSheet()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      Done — Save &amp; Close
+    </button>
+  </div>
+</div>
+
 <div id="printView"></div>
 <script>
 
@@ -1495,16 +1599,19 @@ function toggleJob(section, task, cb, row){
   if(cb.checked){
     jobs[key] = {section:section, task:task, qty:1, meas:0, hrsOv:null, matsOv:null, notes:'', photos:[]};
     row.classList.add('sel');
+    setTimeout(function(){ openSheet(section, task); }, 50);
   } else {
     delete jobs[key];
     row.classList.remove('sel');
   }
   var bdg = document.getElementById('sb-' + section);
   if(bdg){
-    var c = 0;
-    Object.keys(jobs).forEach(function(k){ if(jobs[k].section === section) c++; });
-    bdg.textContent = c;
-    bdg.className = c > 0 ? 'sec-bdg on' : 'sec-bdg';
+    var cnt = 0;
+    Object.keys(jobs).forEach(function(k){ if(jobs[k].section === section) cnt++; });
+    bdg.textContent = cnt;
+    bdg.className = cnt > 0 ? 'sec-bdg on' : 'sec-bdg';
+    var sc = document.getElementById('sc-' + section);
+    if(sc) sc.textContent = cnt > 0 ? cnt + ' job' + (cnt===1?'':'s') + ' selected' : 'Tap to expand';
   }
   updateBadge();
   save();
@@ -2427,6 +2534,132 @@ function updatePropHeader(){
   if(prep) parts.push(prep);
   if(date) parts.push(date);
   subEl.textContent = parts.length > 0 ? parts.join(' · ') : 'Tap to add property details';
+}
+
+
+// ── Job edit bottom sheet ──────────────────────────────────────────────────────
+var _sheetKey = null;
+
+function openSheet(section, task){
+  var key = jKey(section, task);
+  var j = jobs[key];
+  if(!j) return;
+  _sheetKey = key;
+
+  // Populate header
+  document.getElementById('sheetTitle').textContent = task;
+  document.getElementById('sheetRoom').textContent = section;
+
+  // Qty / Measurement
+  var isOtherJob = (nk(task) === 'other');
+  var qtySection = document.getElementById('sheetQtySection');
+  var qtyWrap = document.getElementById('sheetQtyWrap');
+  var qtyLbl = document.getElementById('sheetQtyLbl');
+  qtyWrap.innerHTML = '';
+
+  if(isOtherJob){
+    qtySection.style.display = 'none';
+  } else {
+    qtySection.style.display = 'block';
+    var mtype = QT[nk(task)];
+    if(mtype){
+      qtyLbl.textContent = mtype === 'sqft' ? 'Square Feet' : 'Linear Feet';
+      var wrap = document.createElement('div');
+      wrap.className = 'sheet-meas';
+      var inp = document.createElement('input');
+      inp.type = 'number'; inp.min = '0'; inp.step = '1';
+      inp.value = j.meas || 0;
+      inp.id = 'sheetMeasInput';
+      inp.addEventListener('input', function(){
+        var jj = jobs[_sheetKey]; if(!jj) return;
+        jj.meas = parseFloat(inp.value) || 0;
+        debounceSave();
+        updateJobCost(_sheetKey);
+      });
+      var unit = document.createElement('span');
+      unit.className = 'sheet-meas-unit';
+      unit.textContent = mtype === 'sqft' ? 'sq ft' : 'ln ft';
+      wrap.appendChild(inp); wrap.appendChild(unit);
+      qtyWrap.appendChild(wrap);
+    } else {
+      qtyLbl.textContent = 'Quantity';
+      var stepper = document.createElement('div');
+      stepper.className = 'qty-stepper';
+      var qm = document.createElement('button'); qm.type='button'; qm.className='qty-btn'; qm.textContent='\u2212';
+      var qv = document.createElement('div'); qv.className='qty-val'; qv.id='sheetQtyVal'; qv.textContent=j.qty||1;
+      var qp = document.createElement('button'); qp.type='button'; qp.className='qty-btn'; qp.textContent='+';
+      qm.addEventListener('click', function(e){
+        e.stopPropagation();
+        var jj=jobs[_sheetKey]; if(!jj||jj.qty<=1) return;
+        jj.qty--; document.getElementById('sheetQtyVal').textContent=jj.qty;
+        debounceSave(); updateJobCost(_sheetKey);
+      });
+      qp.addEventListener('click', function(e){
+        e.stopPropagation();
+        var jj=jobs[_sheetKey]; if(!jj) return;
+        jj.qty++; document.getElementById('sheetQtyVal').textContent=jj.qty;
+        debounceSave(); updateJobCost(_sheetKey);
+      });
+      stepper.appendChild(qm); stepper.appendChild(qv); stepper.appendChild(qp);
+      qtyWrap.appendChild(stepper);
+    }
+  }
+
+  // Notes
+  document.getElementById('sheetNotes').value = j.notes || '';
+
+  // Photos
+  var grid = document.getElementById('sheetPhotoGrid');
+  grid.innerHTML = '';
+  (j.photos||[]).forEach(function(src, pidx){
+    var wrap = document.createElement('div'); wrap.className='photo-thumb';
+    var img = document.createElement('img'); img.src=src;
+    var rm = document.createElement('button'); rm.type='button'; rm.className='photo-rm'; rm.textContent='\xd7';
+    rm.addEventListener('click', function(){
+      var jj=jobs[_sheetKey]; if(!jj) return;
+      jj.photos.splice(pidx,1); save();
+      openSheet(section, task); // re-render sheet
+    });
+    wrap.appendChild(img); wrap.appendChild(rm); grid.appendChild(wrap);
+  });
+
+  // Wire notes save
+  document.getElementById('sheetNotes').oninput = function(){
+    var jj=jobs[_sheetKey]; if(!jj) return;
+    jj.notes=this.value; debounceSave();
+  };
+
+  // Show sheet
+  document.getElementById('sheetOverlay').classList.add('on');
+  document.getElementById('jobSheet').classList.add('on');
+  // Focus measurement input if present
+  setTimeout(function(){
+    var mi = document.getElementById('sheetMeasInput');
+    if(mi) mi.focus();
+  }, 350);
+}
+
+function closeSheet(){
+  document.getElementById('sheetOverlay').classList.remove('on');
+  document.getElementById('jobSheet').classList.remove('on');
+  _sheetKey = null;
+  // Refresh summary if it's visible
+  if(document.getElementById('pSum').classList.contains('on')){
+    renderSum();
+  }
+}
+
+function sheetAddPhotos(input){
+  var j = jobs[_sheetKey]; if(!j) return;
+  var section = j.section; var task = j.task;
+  Array.from(input.files).forEach(function(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      j.photos.push(e.target.result); save();
+      openSheet(section, task);
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 try { document.getElementById('xDate').value=new Date().toISOString().slice(0,10); } catch(e){}
