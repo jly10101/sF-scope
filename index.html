@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SF Scope Creator v10.0</title>
+<title>SF Scope Creator v10.1</title>
 <style>
 :root{
   --brand:#1B2B3A;--accent:#C85A2A;--accent2:#E8A87C;
@@ -41,6 +41,34 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 .tab{flex:1;border:none;background:none;padding:10px 4px 9px;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:color .15s;font-family:inherit}
 .tab svg{width:22px;height:22px;stroke-width:1.8;fill:none;stroke:currentColor}
 .tab.on{color:var(--accent)}.tab.on svg{stroke:var(--accent)}
+.prop-header-card{
+  background:var(--surface);border-radius:var(--radius);
+  box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden;
+}
+.prop-header-collapsed{
+  display:flex;align-items:center;gap:12px;padding:12px 16px;
+  cursor:pointer;
+}
+.prop-header-collapsed:active{background:var(--surface2)}
+.prop-header-icon{
+  width:36px;height:36px;border-radius:9px;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.prop-header-info{flex:1;min-width:0}
+.prop-header-addr{font-size:14px;font-weight:700;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prop-header-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.prop-header-edit{font-size:12px;color:var(--accent);font-weight:600;flex-shrink:0}
+.prop-header-form{border-top:1px solid var(--border);padding:2px 0}
+.prop-header-form .pf{border-bottom:1px solid var(--border)}
+.prop-header-form .pf:last-child{border-bottom:none}
+.prop-header-form .pf label{font-size:11px;font-weight:600;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--muted);display:block;padding:10px 14px 0}
+.prop-header-form .pf input,.prop-header-form .pf textarea{
+  width:100%;border:none;outline:none;padding:7px 14px 11px;
+  font-size:15px;font-family:inherit;color:var(--ink);background:transparent}
+.prop-header-form .pf textarea{resize:none;height:60px}
 .search-wrap{position:relative;margin-bottom:14px}
 .search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--muted);stroke-width:2;fill:none;pointer-events:none}
 .search-wrap input{width:100%;padding:11px 14px 11px 38px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:inherit;color:var(--ink);outline:none;box-shadow:var(--shadow-sm);transition:border-color .15s}
@@ -194,7 +222,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 <div class="hdr">
   <div class="hdr-brand">
     <div class="hdr-title">Stone <em>Fortress</em></div>
-    <div class="hdr-sub">Rental Turn Scope &nbsp;v10.0</div>
+    <div class="hdr-sub">Rental Turn Scope &nbsp;v10.1</div>
   </div>
   <div class="hdr-right">
     <div class="rate-wrap">
@@ -204,6 +232,24 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
   </div>
 </div>
 <div class="pane on" id="pScope">
+  <!-- Property card -->
+  <div class="prop-header-card">
+    <div class="prop-header-collapsed" onclick="togglePropHeader()">
+      <div class="prop-header-icon">&#127968;</div>
+      <div class="prop-header-info">
+        <div class="prop-header-addr" id="propHeaderAddr">Enter property address</div>
+        <div class="prop-header-sub" id="propHeaderSub">Tap to add property details</div>
+      </div>
+      <div class="prop-header-edit" id="propHeaderEdit">Edit</div>
+    </div>
+    <div class="prop-header-form" id="propHeaderForm" style="display:none">
+      <div class="pf"><label>Property Address</label><input type="text" id="xAddr" placeholder="123 Main St, Unit 2" oninput="updatePropHeader()"></div>
+      <div class="pf"><label>Prepared By</label><input type="text" id="xPrep" placeholder="Your name" oninput="updatePropHeader()"></div>
+      <div class="pf"><label>Date</label><input type="date" id="xDate" oninput="updatePropHeader()"></div>
+      <div class="pf"><label>Notes</label><textarea id="xNotes" placeholder="Additional scope notes&#8230;" oninput="updatePropHeader()"></textarea></div>
+    </div>
+  </div>
+  <!-- Search -->
   <div class="search-wrap">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
     <input type="text" placeholder="Search rooms and tasks&#8230;" oninput="globalSearch(this.value)">
@@ -212,13 +258,6 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 </div>
 <div class="pane" id="pSum"><div id="sumContent"></div></div>
 <div class="pane" id="pExp">
-  <div class="export-section-lbl">Property Details</div>
-  <div class="prop-form">
-    <div class="pf"><label>Property Address</label><input type="text" id="xAddr" placeholder="123 Main St, Unit 2"></div>
-    <div class="pf"><label>Prepared By</label><input type="text" id="xPrep" placeholder="Your name"></div>
-    <div class="pf"><label>Date</label><input type="date" id="xDate"></div>
-    <div class="pf"><label>Notes</label><textarea id="xNotes" placeholder="Additional scope notes&#8230;"></textarea></div>
-  </div>
   <div class="export-section-lbl">Print &amp; Export</div>
   <button class="action-btn btn-print" onclick="smartPrint(false)">
     <div class="action-btn-icon">&#128424;</div>
@@ -2368,10 +2407,41 @@ function printPOCoverSheet(){
 }
 
 
+
+function togglePropHeader(){
+  var form = document.getElementById('propHeaderForm');
+  var editBtn = document.getElementById('propHeaderEdit');
+  var isOpen = form.style.display !== 'none';
+  form.style.display = isOpen ? 'none' : 'block';
+  editBtn.textContent = isOpen ? 'Edit' : 'Done';
+}
+
+function updatePropHeader(){
+  var addr = document.getElementById('xAddr').value;
+  var prep = document.getElementById('xPrep').value;
+  var date = document.getElementById('xDate').value;
+  var addrEl = document.getElementById('propHeaderAddr');
+  var subEl = document.getElementById('propHeaderSub');
+  addrEl.textContent = addr || 'Enter property address';
+  var parts = [];
+  if(prep) parts.push(prep);
+  if(date) parts.push(date);
+  subEl.textContent = parts.length > 0 ? parts.join(' · ') : 'Tap to add property details';
+}
+
 try { document.getElementById('xDate').value=new Date().toISOString().slice(0,10); } catch(e){}
 loadJobs();
 buildScope();
 updateBadge();
+// Open property form on first load if address is empty
+(function(){
+  var addr = document.getElementById('xAddr');
+  if(addr && !addr.value){
+    document.getElementById('propHeaderForm').style.display = 'block';
+    document.getElementById('propHeaderEdit').textContent = 'Done';
+  }
+  updatePropHeader();
+})();
 // Debug: show section count in search placeholder
 (function(){
   var list = document.getElementById('scopeList');
