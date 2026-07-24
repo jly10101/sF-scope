@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SF Scope Creator v10.4</title>
+<title>SF Scope Creator v10.6</title>
 <style>
 :root{
   --brand:#1B2B3A;--accent:#C85A2A;--accent2:#E8A87C;
@@ -104,6 +104,40 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 .task-row input[type=checkbox]:checked::after{content:'';position:absolute;left:5px;top:2px;width:7px;height:11px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(42deg)}
 .task-row label{font-size:14px;color:var(--ink2);flex:1;cursor:pointer;line-height:1.4}
 .task-row.sel label{color:var(--ink);font-weight:600}
+
+/* ── Inline edit panel (expands below checked row) ──────────────────────── */
+.inline-edit{
+  background:var(--surface2);border-top:1px solid var(--border);
+  padding:14px 16px;
+  animation:slideDown .2s ease;
+}
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.inline-edit-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.inline-edit-lbl{font-size:12px;font-weight:600;color:var(--ink2);width:80px;flex-shrink:0}
+.inline-done-btn{
+  width:100%;padding:11px;border-radius:var(--radius-sm);border:none;
+  background:var(--ok);color:#fff;font-size:14px;font-weight:700;
+  cursor:pointer;font-family:inherit;margin-top:4px;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+}
+.inline-done-btn:active{opacity:.85}
+.inline-notes{
+  width:100%;border:1.5px solid var(--border);border-radius:8px;
+  padding:9px 11px;font-size:14px;font-family:inherit;
+  resize:none;height:68px;outline:none;
+  color:var(--ink);background:var(--surface);margin-bottom:10px;
+}
+.inline-notes:focus{border-color:var(--accent)}
+.inline-photo-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.inline-add-photo{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 12px;border-radius:var(--radius-sm);
+  border:1.5px dashed var(--border2);background:var(--surface);
+  color:var(--ink2);font-size:13px;font-weight:600;
+  cursor:pointer;font-family:inherit;
+}
+.inline-add-photo input{display:none}
+
 .edit-btn{
   border:none;background:none;padding:5px 8px;cursor:pointer;
   color:var(--accent);font-size:12px;font-weight:700;
@@ -292,7 +326,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 <div class="hdr">
   <div class="hdr-brand">
     <div class="hdr-title">Stone <em>Fortress</em></div>
-    <div class="hdr-sub">Rental Turn Scope &nbsp;v10.4</div>
+    <div class="hdr-sub">Rental Turn Scope &nbsp;v10.6</div>
   </div>
   <div class="hdr-right">
     <div class="rate-wrap">
@@ -1508,11 +1542,11 @@ function buildScope(){
   SECTIONS.forEach(function(sec){
     var card = document.createElement('div');
     card.className = 'sec-card';
-    card.id = 'sc-' + sec.n;
+    card.id = 'scard-' + sec.n;
 
     var hdr = document.createElement('div');
     hdr.className = 'sec-hdr';
-    hdr.innerHTML = '<div class="sec-icon">' + sec.i + '</div>' + '<div class="sec-info"><div class="sec-name">' + sec.n + '</div>' + '<div class="sec-count" id="sc-' + sec.n + '">Tap to expand</div></div>' + '<span class="sec-bdg" id="sb-' + sec.n + '">0</span>' + '<div class="sec-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>';
+    hdr.innerHTML = '<div class="sec-icon">' + sec.i + '</div>' + '<div class="sec-info"><div class="sec-name">' + sec.n + '</div>' + '<div class="sec-count" id="scnt-' + sec.n + '">Tap to expand</div></div>' + '<span class="sec-bdg" id="sb-' + sec.n + '">0</span>' + '<div class="sec-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>';
     hdr.addEventListener('click', function(){ card.classList.toggle('open'); });
 
     var body = document.createElement('div');
@@ -1594,7 +1628,7 @@ function buildScope(){
 function globalSearch(q){
   var lq = q.toLowerCase();
   SECTIONS.forEach(function(sec){
-    var card = document.getElementById('sc-' + sec.n);
+    var card = document.getElementById('scard-' + sec.n);
     if(!card) return;
     var any = false;
     card.querySelectorAll('.task-row').forEach(function(r){
@@ -1613,7 +1647,7 @@ function toggleJob(section, task, cb, row){
   if(cb.checked){
     jobs[key] = {section:section, task:task, qty:1, meas:0, hrsOv:null, matsOv:null, notes:'', photos:[]};
     row.classList.add('sel');
-    setTimeout(function(){ openSheet(section, task); }, 30);
+    openInlineEdit(key, row);
   } else {
     delete jobs[key];
     row.classList.remove('sel');
@@ -1624,7 +1658,7 @@ function toggleJob(section, task, cb, row){
     Object.keys(jobs).forEach(function(k){ if(jobs[k].section === section) cnt++; });
     bdg.textContent = cnt;
     bdg.className = cnt > 0 ? 'sec-bdg on' : 'sec-bdg';
-    var sc = document.getElementById('sc-' + section);
+    var sc = document.getElementById('scnt-' + section);
     if(sc) sc.textContent = cnt > 0 ? cnt + ' job' + (cnt===1?'':'s') + ' selected' : 'Tap to expand';
   }
   updateBadge();
@@ -2553,6 +2587,109 @@ function updatePropHeader(){
 
 // ── Job edit bottom sheet ──────────────────────────────────────────────────────
 var _sheetKey = null;
+
+
+// ── Inline edit panel ──────────────────────────────────────────────────────
+function openInlineEdit(key, row){
+  // Close any other open inline edits first
+  document.querySelectorAll('.inline-edit').forEach(function(el){ el.remove(); });
+
+  var j = jobs[key];
+  if(!j) return;
+
+  var panel = document.createElement('div');
+  panel.className = 'inline-edit';
+  panel.id = 'inline-' + key;
+
+  var isOtherJob = (nk(j.task) === 'other');
+  var mtype = QT[nk(j.task)];
+
+  // Qty / measurement row (skip for 'other')
+  if(!isOtherJob){
+    var qrow = document.createElement('div');
+    qrow.className = 'inline-edit-row';
+    var qlbl = document.createElement('div');
+    qlbl.className = 'inline-edit-lbl';
+
+    if(mtype){
+      qlbl.textContent = mtype === 'sqft' ? 'Sq Ft' : 'Lin Ft';
+      var minp = document.createElement('input');
+      minp.type='number'; minp.min='0'; minp.step='1';
+      minp.className='finput'; minp.style.width='100px'; minp.style.textAlign='center';
+      minp.style.fontSize='18px'; minp.value = j.meas||0;
+      minp.addEventListener('input', function(){
+        var jj=jobs[key]; if(!jj) return;
+        jj.meas=parseFloat(minp.value)||0; debounceSave(); updateJobCost(key);
+      });
+      var munit = document.createElement('span');
+      munit.className='munit'; munit.textContent=mtype==='sqft'?'sq ft':'ln ft';
+      qrow.appendChild(qlbl); qrow.appendChild(minp); qrow.appendChild(munit);
+    } else {
+      qlbl.textContent = 'Qty';
+      var stepper = document.createElement('div');
+      stepper.className='qty-stepper';
+      var qm=document.createElement('button'); qm.type='button'; qm.className='qty-btn'; qm.textContent='\u2212';
+      var qv=document.createElement('div'); qv.className='qty-val'; qv.id='iqv-'+key; qv.textContent=j.qty||1;
+      var qp=document.createElement('button'); qp.type='button'; qp.className='qty-btn'; qp.textContent='+';
+      qm.addEventListener('click',function(e){e.stopPropagation();var jj=jobs[key];if(!jj||jj.qty<=1)return;jj.qty--;document.getElementById('iqv-'+key).textContent=jj.qty;debounceSave();updateJobCost(key);});
+      qp.addEventListener('click',function(e){e.stopPropagation();var jj=jobs[key];if(!jj)return;jj.qty++;document.getElementById('iqv-'+key).textContent=jj.qty;debounceSave();updateJobCost(key);});
+      stepper.appendChild(qm); stepper.appendChild(qv); stepper.appendChild(qp);
+      qrow.appendChild(qlbl); qrow.appendChild(stepper);
+    }
+    panel.appendChild(qrow);
+  }
+
+  // Notes
+  var nta = document.createElement('textarea');
+  nta.className='inline-notes'; nta.placeholder='Notes, observations, special instructions\u2026';
+  nta.value = j.notes||'';
+  nta.addEventListener('input',function(){var jj=jobs[key];if(jj){jj.notes=nta.value;debounceSave();}});
+  panel.appendChild(nta);
+
+  // Photo row
+  var photoRow = document.createElement('div');
+  photoRow.className='inline-photo-row';
+  (j.photos||[]).forEach(function(src,pidx){
+    var wrap=document.createElement('div'); wrap.className='photo-thumb';
+    var img=document.createElement('img'); img.src=src;
+    var rm=document.createElement('button'); rm.type='button'; rm.className='photo-rm'; rm.textContent='\xd7';
+    rm.addEventListener('click',function(e){e.stopPropagation();var jj=jobs[key];if(!jj)return;jj.photos.splice(pidx,1);save();openInlineEdit(key,row);});
+    wrap.appendChild(img); wrap.appendChild(rm); photoRow.appendChild(wrap);
+  });
+  var addPhoto=document.createElement('label'); addPhoto.className='inline-add-photo';
+  addPhoto.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>Photo';
+  var fi=document.createElement('input'); fi.type='file'; fi.accept='image/*'; fi.multiple=true;
+  fi.addEventListener('change',function(){
+    var jj=jobs[key]; if(!jj) return;
+    Array.from(fi.files).forEach(function(file){
+      var reader=new FileReader();
+      reader.onload=function(e){jj.photos.push(e.target.result);save();openInlineEdit(key,row);};
+      reader.readAsDataURL(file);
+    });
+  });
+  addPhoto.appendChild(fi); photoRow.appendChild(addPhoto);
+  panel.appendChild(photoRow);
+
+  // Done button
+  var doneBtn=document.createElement('button'); doneBtn.type='button'; doneBtn.className='inline-done-btn';
+  doneBtn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Done';
+  doneBtn.addEventListener('click',function(e){
+    e.stopPropagation();
+    panel.remove();
+  });
+  panel.appendChild(doneBtn);
+
+  // Insert after the row
+  row.parentNode.insertBefore(panel, row.nextSibling);
+
+  // Focus measurement or notes
+  if(!isOtherJob && mtype){
+    panel.querySelector('input[type=number]').focus();
+  } else if(!isOtherJob){
+    // focus notes
+    nta.focus();
+  }
+}
 
 function openSheet(section, task){
   var key = jKey(section, task);
