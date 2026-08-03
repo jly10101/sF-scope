@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SF Scope Creator v11.2</title>
+<title>SF Scope Creator v11.3</title>
 <style>
 :root{
   --brand:#1B2B3A;--accent:#C85A2A;--accent2:#E8A87C;
@@ -338,6 +338,15 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
   .pv-mat{font-size:8.5pt;color:#333;padding:1pt 0 1pt 10pt;position:relative}
   .pv-mat::before{content:"\2022";position:absolute;left:2pt;color:#C85A2A}
   .pv-footer{margin-top:16pt;padding-top:6pt;border-top:1pt solid #ccc;font-size:8pt;color:#888;text-align:center}
+  /* Notes */
+  .pv-job-notes{padding:5pt 7pt;border-top:0.5pt solid #eee;background:#fffef8}
+  .pv-notes-lbl{font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#777;margin-bottom:2pt}
+  .pv-notes-text{font-size:9pt;color:#333;line-height:1.4;white-space:pre-wrap}
+  /* Photos */
+  .pv-job-photos{padding:5pt 7pt;border-top:0.5pt solid #eee}
+  .pv-photos-lbl{font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#777;margin-bottom:5pt}
+  .pv-photos-grid{display:flex;flex-wrap:wrap;gap:8pt}
+  .pv-photo{width:4in;height:auto;object-fit:cover;border-radius:4pt;border:0.5pt solid #ccc;page-break-inside:avoid}
   .pv-agg{margin-top:14pt;border-top:2pt solid #000;padding-top:10pt}
   .pv-agg-title{font-size:13pt;font-weight:700;margin-bottom:5pt}
   .pv-agg-subtitle{font-size:8pt;color:#666;font-style:italic;margin-bottom:8pt}
@@ -360,7 +369,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 <div class="hdr">
   <div class="hdr-brand">
     <div class="hdr-title">Stone <em>Fortress</em></div>
-    <div class="hdr-sub">Rental Turn Scope &nbsp;v11.2</div>
+    <div class="hdr-sub">Rental Turn Scope &nbsp;v11.3</div>
   </div>
   <div class="hdr-right">
     <div class="rate-wrap">
@@ -2073,6 +2082,24 @@ function smartPrint(noCost){
         html += '<div class="pv-job-body">';
         html += '<div class="pv-mats-lbl">Materials</div>';
         mats.forEach(function(mat){ html += '<div class="pv-mat">' + mat + '</div>'; });
+        html += '</div>';
+      }
+      // Notes
+      if(j.notes && j.notes.trim()){
+        html += '<div class="pv-job-notes">';
+        html += '<div class="pv-notes-lbl">Notes</div>';
+        html += '<div class="pv-notes-text">' + j.notes.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>') + '</div>';
+        html += '</div>';
+      }
+      // Photos
+      if(j.photos && j.photos.length > 0){
+        html += '<div class="pv-job-photos">';
+        html += '<div class="pv-photos-lbl">Photos</div>';
+        html += '<div class="pv-photos-grid">';
+        j.photos.forEach(function(src){
+          html += '<img class="pv-photo" src="' + src + '">';
+        });
+        html += '</div>';
         html += '</div>';
       }
       html += '</div>';
