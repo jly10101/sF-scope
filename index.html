@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SF Scope Creator v13.1</title>
+<title>SF Scope Creator v13.2</title>
 <style>
 :root{
   --brand:#1B2B3A;--accent:#C85A2A;--accent2:#E8A87C;
@@ -374,7 +374,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 <div class="hdr">
   <div class="hdr-brand">
     <div class="hdr-title">Stone <em>Fortress</em></div>
-    <div class="hdr-sub">Rental Turn Scope &nbsp;v13.1</div>
+    <div class="hdr-sub">Rental Turn Scope &nbsp;v13.2</div>
   </div>
   <div class="hdr-right">
     <div class="rate-wrap">
@@ -1724,7 +1724,7 @@ function updateBadge(){ document.getElementById('totalBadge').textContent = coun
 var SUBSECTION_ORDER = [
   'Walls & Ceiling','Doors & Windows','Porch, Deck & Railings','Trim & Millwork','Flatwork','Paint',
   'Plumbing','Water Heater','Toilet','Tub & Shower','Vanity','HVAC','Electrical','Cabinets & Countertop','Storage',
-  'Appliances','Roof','Gutters & Downspouts','Siding','Fence & Retaining Wall','Grounds','Exterior Electrical','Exterior Doors & Windows','Insulation','Safety','Other'
+  'Appliances','Roof','Gutters & Downspouts','Siding','Fence & Retaining Wall','Grounds','Exterior Electrical','Exterior Doors & Windows','Insulation','Safety','Mechanical','Other'
 ];
 
 var SUBSECTION_KEYWORDS = {
@@ -1735,7 +1735,7 @@ var SUBSECTION_KEYWORDS = {
   'Flatwork': ['hardwood floor sanding and refinishing','wall skim coat','repair sidewalk','replace sidewalk','repair driveway','replace driveway','subfloor repair','reuse existing','repair existing vinyl plank','replace flooring with click lock','replace transition strips','replace bull nose stair transition','install carpet full room','replace carpet','lay carpet over existing','repair carpet section','clean carpet stain','repair porch/patio surface','replace porch/patio boards'],
   'Paint': ['paint walls','paint ceiling','paint walls with primer','paint ceiling with primer','paint trim and casing','paint baseboard','paint exterior siding'],
   'Plumbing': ['replace single bowl sink','replace double bowl sink','reattach sink','repair drain plumbing','recaulk vanity','cap/seal well casing','replace well pressure switch','replace exterior water shutoff valve','apply caulk — kitchen','remove and apply caulk — kitchen','remove and reapply caulk','replace faucet','retighten faucet','repair dripping faucet','repair drain piping','unclog drain','replace drain stopper','repair drain stopper','replace sink supply','retighten supply','repair leaking supply','repair kitchen sink supply','replace kitchen sink supply','repair kitchen sink drain','replace kitchen sink drain','repair dishwasher supply','replace dishwasher supply','repair dishwasher drain','replace dishwasher drain','repair kitchen drain','replace kitchen drain','unclog kitchen drain','replace drain plumbing','replace laundry valve','unclog laundry drain','repair laundry supply','replace laundry supply','refasten laundry supply','repair laundry drain','replace laundry drain','refasten laundry drain','replace strainers','caulk with 100% silicone kitchen sink','replace supply line','replace 1/4 turn ball valves','replace cleanout cap'],
-  'Water Heater': ['replace well pump','repair well pump','inspect exterior sewer','diagnose exterior sewer','pump/service septic','replace septic riser','inspect gas lines','diagnose gas lines','repair gas lines','diagnose/repair gas lines','replace water heater','repair water heater','replace anode rod','replace pressure relief valve','replace expansion tank','flush/service water heater'],
+  'Water Heater': ['water heater','anode rod','pressure relief valve','expansion tank','flush/service water heater'],
   'Toilet': ['repair toilet','retighten toilet','unclog toilet','replace toilet','replace toilet seat','replace wax ring','replace toilet flange','replace the rotted subfloor under toilet','replace jonny bolts','retighten toilet paper holder','replace toilet paper holder'],
   'Tub & Shower': ['unclog shower','unclog tub','replace shower walls','replace shower pan','replace tub surround','replace tub with','recoat tub','replace shower valve','retighten shower valve','repair leaking shower head','replace shower head','replace shower valve escutcheon','replace tub spout','retighten tub spout','recaulk shower','recaulk tub'],
   'Vanity': ['replace vanity','reattach vanity','reattach top to vanity','recaulk vanity/pedestal'],
@@ -1754,7 +1754,8 @@ var SUBSECTION_KEYWORDS = {
   'Insulation': ['add/replace attic insulation','replace/reposition baffles','repair roof deck water damage','replace damaged rafter','install rim joist','repair/reseal rim joist','seal around basement exterior','install/replace vapor barrier','repair/patch vapor barrier','install faced insulation','repair faced insulation','seal attic penetrations'],
   'Safety': ['replace batteries in smoke','replace battery operated smoke','replace wireless interconnected smoke','replace wired smoke','replace co detector','replace fire extinguisher'],
   'Other': ['other','exterior','deep clean','carpet spot','pressure wash exterior','demo/cleanout','basic cleaning of whole house','professional carpet cleaning','professional house cleaning']
-};
+,
+  'Mechanical': ['water heater','well pump','well casing','well pressure','septic','sewer/septic','gas line','gas connections','diagnose gas','repair gas','inspect gas','replace gas','diagnose/repair gas']};
 
 function getTaskSubsection(task){
   var t = task.toLowerCase();
@@ -3608,7 +3609,7 @@ function updateBadge(){ document.getElementById('totalBadge').textContent = coun
 var SUBSECTION_ORDER = [
   'Walls & Ceiling','Doors & Windows','Porch, Deck & Railings','Trim & Millwork','Flatwork','Paint',
   'Plumbing','Water Heater','Toilet','Tub & Shower','Vanity','HVAC','Electrical','Cabinets & Countertop','Storage',
-  'Appliances','Roof','Gutters & Downspouts','Siding','Fence & Retaining Wall','Grounds','Exterior Electrical','Exterior Doors & Windows','Insulation','Safety','Other'
+  'Appliances','Roof','Gutters & Downspouts','Siding','Fence & Retaining Wall','Grounds','Exterior Electrical','Exterior Doors & Windows','Insulation','Safety','Mechanical','Other'
 ];
 
 var SUBSECTION_KEYWORDS = {
