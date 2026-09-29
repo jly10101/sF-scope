@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SF Scope Creator v14.0</title>
+<title>SF Scope Creator v14.1</title>
 <style>
 :root{
   --brand:#1B2B3A;--accent:#C85A2A;--accent2:#E8A87C;
@@ -374,7 +374,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 <div class="hdr">
   <div class="hdr-brand">
     <div class="hdr-title">Stone <em>Fortress</em></div>
-    <div class="hdr-sub">Rental Turn Scope &nbsp;v14.0</div>
+    <div class="hdr-sub">Rental Turn Scope &nbsp;v14.1</div>
   </div>
   <div class="hdr-right">
     <div class="rate-wrap">
@@ -714,6 +714,8 @@ var QT = {
   "repair ceiling light/fan combo":"lnft",
   "replace ceiling light/fan combo":"lnft",
   "paint doors":"lnft"
+,
+  "other":"lnft"
 }
 
 var MR = {
@@ -1017,7 +1019,7 @@ var MR = {
   "repair interior door with wood putty":{m:8.0,h:0.525},
   "paint interior door":{m:20.0,h:0.9},
   "interior door paint touch-up":{m:8.0,h:0.35},
-  "other":{m:0.0,h:0.0},
+  "other":{m:0.0,h:0.25},
   "remove and reapply caulk as needed":{m:8.0,h:0.525},
   "install door strike plate only":{m:12.0,h:0.35},
   "remove and replace door strike plate":{m:14.0,h:0.35},
@@ -1759,7 +1761,7 @@ var SUBSECTION_KEYWORDS = {
   'Insulation': ['add/replace attic insulation','replace/reposition baffles','repair roof deck water damage','replace damaged rafter','install rim joist','repair/reseal rim joist','seal around basement exterior','install/replace vapor barrier','repair/patch vapor barrier','install faced insulation','repair faced insulation','seal attic penetrations'],
   'Safety': ['replace batteries in smoke','replace battery operated smoke','replace wireless interconnected smoke','replace wired smoke','replace co detector','replace fire extinguisher'],
   'Mechanical': ['well pump','well casing','well pressure switch','septic','sewer/septic','gas line','gas connections','diagnose gas','repair gas lines','inspect gas','diagnose/repair gas','pump/service','replace septic','inspect exterior sewer','diagnose exterior sewer'],
-  'Other': ['other','exterior','deep clean','carpet spot','pressure wash exterior','demo/cleanout','basic cleaning of whole house','professional carpet cleaning','professional house cleaning']
+  'Other': ['other','deep clean','carpet spot','pressure wash exterior','demo/cleanout','basic cleaning of whole house','professional carpet cleaning','professional house cleaning']
 };
 
 function getTaskSubsection(task){
