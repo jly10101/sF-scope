@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SF Scope Creator v14.3</title>
+<title>SF Scope Creator v14.4</title>
 <style>
 :root{
   --brand:#1B2B3A;--accent:#C85A2A;--accent2:#E8A87C;
@@ -367,6 +367,49 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 }
 @media screen{#printView{display:none}}
 ::-webkit-scrollbar{display:none}
+
+/* ── Collapsible subsections ─────────────────────────────────────────────── */
+.subsec-hdr {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--surface2, #f0f3f8);
+  border-bottom: 1px solid var(--border, #e0e4ea);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.subsec-hdr:active { opacity: 0.75; }
+.subsec-title {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--brand, #1F3864);
+}
+.subsec-badge {
+  background: var(--accent, #B08D57);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 1px 7px;
+  margin-right: 8px;
+  min-width: 18px;
+  text-align: center;
+}
+.subsec-chev {
+  font-size: 18px;
+  color: var(--brand, #1F3864);
+  font-weight: bold;
+  line-height: 1;
+  transition: transform 0.15s;
+}
+.subsec-tasks { border-bottom: 2px solid var(--surface2, #f0f3f8); }
 </style>
 </head>
 <body>
@@ -374,7 +417,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 <div class="hdr">
   <div class="hdr-brand">
     <div class="hdr-title">Stone <em>Fortress</em></div>
-    <div class="hdr-sub">Rental Turn Scope &nbsp;v14.3</div>
+    <div class="hdr-sub">Rental Turn Scope &nbsp;v14.4</div>
   </div>
   <div class="hdr-right">
     <div class="rate-wrap">
