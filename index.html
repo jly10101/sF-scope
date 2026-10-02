@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SF Scope Creator v14.5</title>
+<title>SF Scope Creator v14.7</title>
 <style>
 :root{
   --brand:#1B2B3A;--accent:#C85A2A;--accent2:#E8A87C;
@@ -439,7 +439,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 <div class="hdr">
   <div class="hdr-brand">
     <div class="hdr-title">Stone <em>Fortress</em></div>
-    <div class="hdr-sub">Rental Turn Scope &nbsp;v14.5</div>
+    <div class="hdr-sub">Rental Turn Scope &nbsp;v14.7</div>
   </div>
   <div class="hdr-right">
     <div class="rate-wrap">
@@ -783,7 +783,9 @@ var QT = {
   "other":"lnft"
 ,
   "paint entire interior of home (enter total wall + ceiling sqft, not floor sqft)":"sqft",
-  "small refuse pickup — bags (drive + pickup + return to office + place in dumpster)":"lnft"}
+  "small refuse pickup — bags (drive + pickup + return to office + place in dumpster)":"lnft",
+  "dumpster placement and removal (delivery + pickup + landfill + return to office)":"lnft",
+  "large refuse pickup — dump truck (drive to site + load + return to office + unload into dumpster)":"lnft"}
 
 var MR = {
   "apply caulk — kitchen countertop":{m:0.0,h:0.0},
@@ -1174,7 +1176,9 @@ var MR = {
   "paint windows with primer":{m:0.0,h:0.5}
 ,
   "paint entire interior of home (enter total wall + ceiling sqft, not floor sqft)":{m:0.0,h:0.008},
-  "small refuse pickup — bags (drive + pickup + return to office + place in dumpster)":{m:0.0,h:0.25}}
+  "small refuse pickup — bags (drive + pickup + return to office + place in dumpster)":{m:1.0,h:0.25},
+  "dumpster placement and removal (delivery + pickup + landfill + return to office)":{m:48.0,h:0.0},
+  "large refuse pickup — dump truck (drive to site + load + return to office + unload into dumpster)":{m:48.0,h:0.0}}
 
 var MATS = {
   "replace faucet":["Kitchen/bath faucet (match existing style)","Plumber's putty or silicone","Teflon tape"],
@@ -1624,9 +1628,9 @@ var MATS = {
   "replace tub surround":["Tub surround kit","Adhesive","Caulk","Sandpaper for surface prep"]
 ,
   "paint entire interior of home (enter total wall + ceiling sqft, not floor sqft)":["Interior latex paint (walls & ceilings)","Roller covers","Brushes","Painter's tape","Drop cloths"],
-  "dumpster placement and removal (delivery + pickup + landfill + return to office)":["Dumpster rental fee","Landfill fee (TBD — update when confirmed)","Fuel"],
-  "large refuse pickup — dump truck (drive to site + load + return to office + unload into dumpster)":["Dump truck fuel","Landfill fee (TBD — update when confirmed)"],
-  "small refuse pickup — bags (drive + pickup + return to office + place in dumpster)":["Landfill fee per bag (TBD — update when confirmed)","Fuel (pro-rated)"]}
+  "dumpster placement and removal (delivery + pickup + landfill + return to office)":["Dumpster rental fee","Landfill fee ($48 per ton — enter actual tonnage as qty)","Dumpster rental fee","Fuel"],
+  "large refuse pickup — dump truck (drive to site + load + return to office + unload into dumpster)":["Landfill fee ($48 per ton — enter actual tonnage as qty)","Dump truck fuel"],
+  "small refuse pickup — bags (drive + pickup + return to office + place in dumpster)":["Landfill fee ($1.00 per bag estimate)","Fuel (pro-rated)"]}
 
 var CT = [
 "repair superficial wall damage in marked locations",
@@ -1803,18 +1807,18 @@ function updateBadge(){ document.getElementById('totalBadge').textContent = coun
 var SUBSECTION_ORDER = [
   'Paint','Walls & Ceiling','Doors & Windows','Railings','Porch, Deck & Railings','Trim & Millwork','Flatwork',
   'Plumbing','Water Heater','Toilet','Tub & Shower','Vanity','HVAC','Electrical','Cabinets & Countertop','Storage',
-  'Appliances','Roof','Gutters & Downspouts','Siding','Fence & Retaining Wall','Grounds','Exterior Electrical','Exterior Doors & Windows','Insulation','Safety','Mechanical','Other'
+  'Appliances','Roof','Gutters & Downspouts','Siding','Fence & Retaining Wall','Grounds','Exterior Electrical','Exterior Doors & Windows','Insulation','Safety','Mechanical','Cleaning','Paint','Demo & Cleanout','Pressure Wash','Refuse & Disposal','Other'
 ];
 
 var SUBSECTION_KEYWORDS = {
-  'Paint': ['paint windows','paint windows with primer','paint doors','paint doors with primer','paint walls','paint ceiling','paint walls with primer','paint ceiling with primer','paint trim and casing','paint baseboard','paint interior door','paint closet door','interior door paint touch-up','paint hvac registers','paint hvac baseboard','paint cabinet doors','paint cabinet boxes','paint exterior siding'],
+  'Paint': ['paint entire interior','paint walls','paint ceiling','paint walls with primer','paint ceiling with primer','paint trim and casing','paint baseboard','paint doors with primer','paint interior door','paint windows with primer','paint closet door','interior door paint touch-up','paint hvac registers','paint hvac baseboard','paint cabinet doors','paint cabinet boxes','paint exterior siding'],
   'Walls & Ceiling': ['repair superficial wall','repair superficial ceiling','repair small holes in walls','repair small holes in ceiling','repair large wall','repair large ceiling','apply waterproof coating','repair basement walls','wall skim coat'],
   'Doors & Windows': ['install door strike plate','remove and replace door strike','caulk around windowpane','replace window jambs','replace window lock/handle','replace interior door','repair marked door','repair interior door','reattach marked door to hinges','retighten bifold','repair bifold','replace bifold door','replace closet bypass','replace pocket door','repair/adjust pocket door','replace barn door','replace door hinges','repair/shim door frame','replace pass thru door knobs','replace locking door knobs','retighten door knobs','replace hinge door stop','replace floor door stop','retighten floor and hinge door stops'],
   'Porch, Deck & Railings': ['replace handrail','replace handrail bracket','retighten handrail','repair porch railing','replace porch railing','repair exterior handrail','replace exterior handrail','replace deck baluster','reattach deck baluster','porch/patio','porch railing','newel post'],
-  'Railings': ['replace handrail','replace handrail bracket','retighten handrail','replace stair baluster','reattach stair baluster','replace newel post','newel post'],
+  'Railings': ['replace handrail','replace handrail bracket','retighten handrail','replace newel post','newel post','stair baluster','reattach stair baluster'],
   'Trim & Millwork': ['stair baluster','stair tread','stair tred','stair riser','repair steps','replace base trim','replace casing trim','caulk trim','reattach trim','wood putty trim'],
   'Flatwork': ['hardwood floor sanding','subfloor repair','repair existing vinyl plank','replace flooring with click lock','replace transition strips','replace bull nose stair transition','install carpet full room','replace carpet','repair carpet section','clean carpet stain','repair porch/patio surface','replace porch/patio boards','repair sidewalk','replace sidewalk','repair driveway','replace driveway'],
-  'Plumbing': ['replace 1/4 turn ball valves','replace supply line','replace single bowl sink','replace double bowl sink','reattach sink','repair drain plumbing','replace drain plumbing','recaulk vanity','replace faucet','retighten faucet','repair dripping faucet','unclog drain','replace drain stopper','repair drain stopper','replace sink supply','retighten supply lines','repair leaking supply','repair kitchen sink supply','replace kitchen sink supply','repair kitchen sink drain','replace kitchen sink drain','repair dishwasher supply','replace dishwasher supply','repair dishwasher drain','replace dishwasher drain','repair kitchen drain','replace kitchen drain','unclog kitchen drain','repair laundry supply','replace laundry supply','refasten laundry supply','repair laundry drain','replace laundry drain','refasten laundry drain','replace strainers','caulk with 100% silicone kitchen','remove and reapply caulk','cap/seal well casing','replace well pressure switch','replace exterior water shutoff'],
+  'Plumbing': ['replace single bowl sink','replace double bowl sink','reattach sink','repair drain plumbing','replace drain plumbing','recaulk vanity','replace faucet','retighten faucet','repair dripping faucet','unclog drain','replace drain stopper','repair drain stopper','replace sink supply','retighten supply lines','repair leaking supply','repair kitchen sink supply','replace kitchen sink supply','repair kitchen sink drain','replace kitchen sink drain','repair dishwasher supply','replace dishwasher supply','repair dishwasher drain','replace dishwasher drain','repair kitchen drain','replace kitchen drain','unclog kitchen drain','repair laundry supply','replace laundry supply','refasten laundry supply','repair laundry drain','replace laundry drain','refasten laundry drain','replace strainers','caulk with 100% silicone kitchen','remove and reapply caulk','cap/seal well casing','replace well pressure switch','replace exterior water shutoff','replace 1/4 turn ball valves','replace supply line'],
   'Water Heater': ['water heater','anode rod','pressure relief valve','expansion tank','flush/service water heater'],
   'Toilet': ['repair toilet','retighten toilet','unclog toilet','replace toilet','replace toilet seat','replace wax ring','replace toilet flange','replace the rotted subfloor under toilet','replace jonny bolts','retighten toilet paper holder','replace toilet paper holder'],
   'Tub & Shower': ['unclog shower','unclog tub','replace tub surround','replace shower walls','replace shower pan','replace tub with','recoat tub','replace shower valve','retighten shower valve','repair leaking shower head','replace shower head','replace shower valve escutcheon','replace tub spout','retighten tub spout','recaulk shower','recaulk tub'],
@@ -1830,14 +1834,16 @@ var SUBSECTION_KEYWORDS = {
   'Fence & Retaining Wall': ['replace fence','repair fence','replace fence post','reattach/reset fence post','replace fence gate','repair/adjust fence gate','replace retaining wall','repair/restack retaining','replace timber retaining','repair timber retaining'],
   'Grounds': ['grass seeding','straw/hay mulch','tree trimming','tree removal','stump grinding','trim vegetation from power','remove tree/shrub'],
   'Exterior Electrical': ['replace exterior flood','repair exterior flood','remove exterior flood','replace exterior regular light','repair exterior regular light','remove exterior regular light','replace exterior receptacle','repair exterior receptacle','remove exterior receptacle','replace weatherhead','repair/reseal weatherhead','replace porch/patio light','replace electric meter cover','replace exterior gfci outlet','replace exterior outlet cover'],
-  'Exterior Doors & Windows': ['paint doors with primer','paint doors','paint windows with primer','paint windows','replace exterior door','repair exterior door','replace exterior door weatherstripping','replace exterior door threshold','replace exterior window','repair exterior window','replace exterior window screen','caulk exterior window','replace deadbolt','install door chain','replace peephole','replace mailbox','repair/secure mailbox','repair window/door flashing','replace window/door flashing','replace wood trim/brick molding','repair wood trim/brick molding','cover exterior patched hole','caulk exterior door/window'],
+  'Exterior Doors & Windows': ['replace exterior door','repair exterior door','replace exterior door weatherstripping','replace exterior door threshold','replace exterior window','repair exterior window','replace exterior window screen','caulk exterior window','replace deadbolt','install door chain','replace peephole','replace mailbox','repair/secure mailbox','repair window/door flashing','replace window/door flashing','replace wood trim/brick molding','repair wood trim/brick molding','cover exterior patched hole','caulk exterior door/window','paint doors with primer','paint doors','paint windows with primer','paint windows'],
   'Insulation': ['add/replace attic insulation','replace/reposition baffles','repair roof deck water damage','replace damaged rafter','install rim joist','repair/reseal rim joist','seal around basement exterior','install/replace vapor barrier','repair/patch vapor barrier','install faced insulation','repair faced insulation','seal attic penetrations'],
   'Safety': ['replace batteries in smoke','replace battery operated smoke','replace wireless interconnected smoke','replace wired smoke','replace co detector','replace fire extinguisher'],
   'Mechanical': ['well pump','well casing','well pressure switch','septic','sewer/septic','gas line','gas connections','diagnose gas','repair gas lines','inspect gas','diagnose/repair gas','pump/service','replace septic','inspect exterior sewer','diagnose exterior sewer'],
-  'Other': ['other','deep clean','carpet spot','pressure wash exterior','demo/cleanout','basic cleaning of whole house','professional carpet cleaning','professional house cleaning']
-};
-
-function getTaskSubsection(task){
+  'Cleaning': ['basic cleaning of whole house','professional carpet cleaning','deep clean','carpet spot cleaning'],
+  'Demo & Cleanout': ['demo/cleanout labor'],
+  'Pressure Wash': ['pressure wash exterior'],
+  'Refuse & Disposal': ['dumpster placement','large refuse pickup','small refuse pickup'],
+  'Other': ['other','professional house cleaning']
+};function getTaskSubsection(task){
   var t = task.toLowerCase();
   for (var i = 0; i < SUBSECTION_ORDER.length; i++) {
     var sub = SUBSECTION_ORDER[i];
@@ -1863,7 +1869,10 @@ var SUBSEC_REMINDERS = {
   'Toilet': 'TEST: Flush properly, no running or phantom flushing. No leaks at base, tank, or supply line. Water shuts off correctly after flush.',
   'Tub & Shower': 'CHECK: Hot and cold water operate correctly. Drain flows freely without backup. No leaks at valve, spout, or drain connections. Shower head pressure adequate.',
   'HVAC': 'TEST: Thermostat operates correctly — system heats and cools to set temperature. All supply vents and return registers are clear of debris and have proper airflow. Filters inspected.',
-  'Safety': 'TEST: Push test button on every smoke and CO detector — alarm must sound. Check all fire extinguishers — needle must be in the GREEN zone on the pressure dial. If not in green, extinguisher must be recharged or replaced.'
+  'Safety': 'TEST: Push test button on every smoke and CO detector — alarm must sound. Check all fire extinguishers — needle must be in the GREEN zone on the pressure dial. If not in green, extinguisher must be recharged or replaced.',
+  'Cleaning': 'VERIFY: All surfaces cleaned to move-in ready standard. Check inside all cabinets, appliances, and fixtures.',
+  'Refuse & Disposal': 'NOTE: Enter actual tonnage for dumpster and dump truck. Enter bag count for bag pickup. Landfill fee is $48 per ton.',
+  'Pressure Wash': 'CHECK: All exterior surfaces rinsed clean. No streaking on siding, walkways, or driveway.'
 };
 
 function buildScope(){
@@ -3759,9 +3768,7 @@ var BG = {
   "pressure wash exterior of property":{m:0.0,h:4.0},
   "professional carpet cleaning (whole house)":{m:150.0,h:0.0},
   "repair carpet section":{m:50.0,h:0.0}
-,
-  "dumpster placement and removal (delivery + pickup + landfill + return to office)":{m:0.0,h:4.0},
-  "large refuse pickup — dump truck (drive to site + load + return to office + unload into dumpster)":{m:0.0,h:3.0}};
+};
 function mr(t){ return MR[nk(t)] || null; }
 function qt(t){ return QT[nk(t)] || null; }
 function effH(j){
