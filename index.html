@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SF Scope Creator v14.4</title>
+<title>SF Scope Creator v14.5</title>
 <style>
 :root{
   --brand:#1B2B3A;--accent:#C85A2A;--accent2:#E8A87C;
@@ -368,6 +368,18 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 @media screen{#printView{display:none}}
 ::-webkit-scrollbar{display:none}
 
+
+.subsec-reminder {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--brand, #1F3864);
+  background: #eef2fa;
+  border-left: 3px solid var(--accent, #B08D57);
+  padding: 6px 12px;
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* ── Collapsible subsections ─────────────────────────────────────────────── */
 .subsec-hdr {
   display: flex;
@@ -407,9 +419,19 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
   color: var(--brand, #1F3864);
   font-weight: bold;
   line-height: 1;
-  transition: transform 0.15s;
 }
 .subsec-tasks { border-bottom: 2px solid var(--surface2, #f0f3f8); }
+/* ── Subsection reminder notes ───────────────────────────────────────────── */
+.subsec-reminder {
+  font-size: 11px;
+  font-style: italic;
+  color: #1F3864;
+  background: #eef2fa;
+  border-left: 3px solid #B08D57;
+  padding: 6px 12px;
+  margin: 0;
+  line-height: 1.5;
+}
 </style>
 </head>
 <body>
@@ -417,7 +439,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 <div class="hdr">
   <div class="hdr-brand">
     <div class="hdr-title">Stone <em>Fortress</em></div>
-    <div class="hdr-sub">Rental Turn Scope &nbsp;v14.4</div>
+    <div class="hdr-sub">Rental Turn Scope &nbsp;v14.5</div>
   </div>
   <div class="hdr-right">
     <div class="rate-wrap">
@@ -760,7 +782,8 @@ var QT = {
 ,
   "other":"lnft"
 ,
-  "paint entire interior of home (enter total wall + ceiling sqft, not floor sqft)":"sqft"}
+  "paint entire interior of home (enter total wall + ceiling sqft, not floor sqft)":"sqft",
+  "small refuse pickup — bags (drive + pickup + return to office + place in dumpster)":"lnft"}
 
 var MR = {
   "apply caulk — kitchen countertop":{m:0.0,h:0.0},
@@ -1150,7 +1173,8 @@ var MR = {
   "paint windows":{m:0.0,h:0.4},
   "paint windows with primer":{m:0.0,h:0.5}
 ,
-  "paint entire interior of home (enter total wall + ceiling sqft, not floor sqft)":{m:0.0,h:0.008}}
+  "paint entire interior of home (enter total wall + ceiling sqft, not floor sqft)":{m:0.0,h:0.008},
+  "small refuse pickup — bags (drive + pickup + return to office + place in dumpster)":{m:0.0,h:0.25}}
 
 var MATS = {
   "replace faucet":["Kitchen/bath faucet (match existing style)","Plumber's putty or silicone","Teflon tape"],
@@ -1599,7 +1623,10 @@ var MATS = {
   "wall skim coat (drywall mud)":["Drywall compound (mud)","Primer","Sandpaper","Rollers"],
   "replace tub surround":["Tub surround kit","Adhesive","Caulk","Sandpaper for surface prep"]
 ,
-  "paint entire interior of home (enter total wall + ceiling sqft, not floor sqft)":["Interior latex paint (walls & ceilings)","Roller covers","Brushes","Painter's tape","Drop cloths"]}
+  "paint entire interior of home (enter total wall + ceiling sqft, not floor sqft)":["Interior latex paint (walls & ceilings)","Roller covers","Brushes","Painter's tape","Drop cloths"],
+  "dumpster placement and removal (delivery + pickup + landfill + return to office)":["Dumpster rental fee","Landfill fee (TBD — update when confirmed)","Fuel"],
+  "large refuse pickup — dump truck (drive to site + load + return to office + unload into dumpster)":["Dump truck fuel","Landfill fee (TBD — update when confirmed)"],
+  "small refuse pickup — bags (drive + pickup + return to office + place in dumpster)":["Landfill fee per bag (TBD — update when confirmed)","Fuel (pro-rated)"]}
 
 var CT = [
 "repair superficial wall damage in marked locations",
@@ -1745,7 +1772,7 @@ var SECTIONS = [
 {n:'Basement',i:'Bsmt',t:["replace batteries in smoke detector","replace gfci outlet","replace 15 amp outlet","replace 20 amp outlet","replace 2 way switch","replace 3 way switch","replace gfci outlet cover","replace outlet cover","replace switch cover","replace ceiling light flush mount","replace ceiling light can","repair superficial wall damage in marked locations","repair superficial ceiling damage in marked locations","repair small holes in walls","repair small holes in ceiling","repair large wall damage","repair large ceiling damage","paint walls","paint walls with primer","paint ceiling","paint ceiling with primer","apply waterproof coating to basement walls (per sqft)","replace co detector only","replace fire extinguisher","replace well pump","repair well pump — diagnose and document issue","inspect exterior sewer/septic line","diagnose exterior sewer/septic line issue","install rim joist insulation (per lnft)","repair/reseal rim joist (per lnft)","replace circuit breaker (internal team)","replace AFCI breaker (internal team)","replace GFCI breaker (internal team)","replace main panel (internal team)","add circuit to panel (internal team)","replace water heater — gas (40 gal)","replace water heater — electric (40 gal)","replace water heater — tankless gas","replace water heater — tankless electric","replace anode rod","replace pressure relief valve","replace expansion tank","flush/service water heater","repair water heater — diagnose and document issue","inspect gas lines and connections","diagnose gas lines and connections","repair gas lines and connections","seal around basement exterior access door","replace septic riser lid","pump/service septic tank","cap/seal well casing","replace well pressure switch","replace exterior water shutoff valve","replace battery operated smoke/CO detector","replace wireless interconnected smoke/CO detector","replace wired smoke/CO detector","replace interior door slab only (reuse existing frame)","replace interior door prehung unit with frame","replace bifold door slab only (reuse track)","replace bifold door unit with hardware","replace closet bypass sliding door unit","replace pocket door slab only","repair/adjust pocket door hardware","replace barn door with hardware","replace door hinges (set of 3)","repair/shim door frame — binding or not latching","repair marked door with wood putty","reattach marked door to hinges","repair interior door with wood putty","retighten bifold door knob","repair bifold track and slider system","retighten bifold door hinges","replace pass thru door knobs","replace locking door knobs","retighten door knobs","replace hinge door stop","replace floor door stop","retighten floor and hinge door stops","install door strike plate only","remove and replace door strike plate","replace window jambs and sills","caulk around windowpane","paint windows","paint windows with primer","replace window lock/handle","replace failed light bulbs with led","replace hanging ceiling light","replace hvac thermostat","replace batteries in hvac thermostat","replace hvac baseboard cover","replace hvac radiator","paint closet door handles/knobs","replace cleanout cap","repair/seal HVAC line set","secure/level HVAC unit pad","trim vegetation from HVAC unit","replace HVAC disconnect box","paint doors with primer","diagnose/repair gas lines and connections","hardwood floor sanding and refinishing","clean carpet stain with spot cleaner","wall skim coat (drywall mud)","other"]},
 {n:'Attic/Crawl Space',i:'🏚️',t:["repair superficial wall damage in marked locations","repair small holes in walls","repair large wall damage","repair superficial ceiling damage in marked locations","repair small holes in ceiling","repair large ceiling damage","paint walls","paint walls with primer","paint ceiling","paint ceiling with primer","paint trim and casing","paint trim and casing with primer","paint hvac registers","paint hvac baseboard/radiator","repair existing vinyl plank floor","replace flooring with click lock flooring","repair closet racks","replace closet racks","replace batteries in smoke detector","replace battery operated smoke/CO detector","replace wireless interconnected smoke/CO detector","replace wired smoke/CO detector","replace gfci outlet","replace 15 amp outlet","replace 20 amp outlet","replace 2 way switch","replace 3 way switch","replace 4 way switch","replace gfci outlet cover","replace outlet cover","replace switch cover","replace double switch cover","replace switch and outlet cover","replace switch and gfci cover","replace triple switch cover","replace failed light bulbs with LED","replace ceiling light flush mount","replace ceiling light can","replace batteries in HVAC thermostat","replace HVAC thermostat","replace HVAC floor register","replace HVAC wall register","replace HVAC ceiling diffusor","replace HVAC baseboard cover","replace HVAC radiator","caulk trim with latex painters caulk","reattach trim in marked locations","wood putty trim to repair in marked locations","replace base trim","replace casing trim","replace double outlet cover","replace blank electrical cover plate","add or replace closet light","replace hvac return register","replace hvac supply wall register","replace hvac supply floor register","replace hvac supply ceiling diffuser","replace transition strips","paint interior door","interior door paint touch-up","subfloor repair — remove finish floor, remove damaged subfloor section, install new subfloor","subfloor repair — remove finish floor, sistering damaged joists, install new subfloor","subfloor repair — remove finish floor, remove rotted subfloor under wet area, install cement board","caulk interior door/window trim (per lnft)","replace soffit vent","repair/reattach soffit vent","replace ridge vent (per foot)","repair/reseal ridge vent (per foot)","replace crawl space access door","repair crawl space access door","install/replace vapor barrier (per sqft)","repair/patch vapor barrier (per sqft)","install faced insulation (per lnft)","repair faced insulation (per lnft)","add/replace attic insulation (blown)","add/replace attic insulation (batt)","seal attic penetrations (pest exclusion)","replace co detector only","replace fire extinguisher","replace interior door slab only (reuse existing frame)","replace interior door prehung unit with frame","replace bifold door slab only (reuse track)","replace bifold door unit with hardware","replace closet bypass sliding door unit","replace pocket door slab only","repair/adjust pocket door hardware","replace barn door with hardware","replace door hinges (set of 3)","repair/shim door frame — binding or not latching","repair marked door with wood putty","reattach marked door to hinges","repair interior door with wood putty","retighten bifold door knob","repair bifold track and slider system","retighten bifold door hinges","replace pass thru door knobs","replace locking door knobs","retighten door knobs","replace hinge door stop","replace floor door stop","retighten floor and hinge door stops","install door strike plate only","remove and replace door strike plate","replace window jambs and sills","caulk around windowpane","paint windows","paint windows with primer","replace window lock/handle","replace failed light bulbs with led","replace hanging ceiling light","replace hvac thermostat","replace batteries in hvac thermostat","replace hvac baseboard cover","replace hvac radiator","paint closet door handles/knobs","repair/reattach crawl space access door","paint doors with primer","hardwood floor sanding and refinishing","clean carpet stain with spot cleaner","wall skim coat (drywall mud)","other"]},
 {n:'Exterior',i:'Ext',t:["clean gutters","replace downspout","reattach downspout","extend/redirect downspout","clean downspout","repair vinyl siding (per damaged section)","caulk/seal siding gaps","replace sidewalk section","replace driveway section","trim vegetation from power lines","repair porch railing","repair exterior handrail","repair exterior handrail bracket","replace porch railing","replace exterior handrail","replace exterior handrail bracket","replace metal roof section (per piece)","reattach porch/patio materials (no replacement)","replace roof vent (per piece)","repair/reseal roof vent (per piece)","repair/reattach gutter (per foot)","reattach wood siding (per piece)","repair wood siding with filler and paint/stain","repair roof decking (per sqft)","paint/resurface metal roof (per sqft)","replace porch/patio boards (per sqft)","replace gutter (per foot)","fill holes in siding (per hole)","replace deck baluster","reattach deck baluster","repair sidewalk (crack fill per lnft)","repair driveway (crack fill/seal per lnft)","replace fence section (per lnft)","repair fence section (per lnft)","replace fence post","reattach/reset fence post","replace fence gate","repair/adjust fence gate","replace retaining wall block (per sqft)","repair/restack retaining wall (per sqft)","replace timber retaining wall (per lnft)","repair timber retaining wall (per lnft)","grass seeding (per sqft)","straw/hay mulch application (per sqft)","tree trimming (per tree)","tree removal — small (under 20ft)","tree removal — medium (20-40ft)","tree removal — large (over 40ft)","stump grinding/removal","replace exterior flood/motion light","repair exterior flood/motion light","replace gutter end cap","install siding","apply parging to exterior foundation (per sqft)","remove exterior flood/motion light","replace exterior regular light fixture","repair exterior regular light fixture","remove exterior regular light fixture","replace exterior receptacle (GFCI)","repair exterior receptacle","remove exterior receptacle","replace weatherhead","repair/reseal weatherhead","caulk exterior door/window perimeter (per lnft)","replace deadbolt","install door chain","replace peephole","repair window/door flashing (per lnft)","replace window/door flashing (per lnft)","replace wood trim/brick molding — exterior (per lnft)","repair wood trim/brick molding — exterior (per lnft)","remove screen door, repair and paint hinge area — no replacement","cover exterior patched hole with flashing","replace exterior door","repair exterior door","replace exterior door weatherstripping","replace exterior door threshold","replace exterior window","repair exterior window","replace exterior window screen","caulk exterior window","replace porch/patio light fixture","replace mailbox","repair/secure mailbox","remove tree/shrub encroaching on structure","replace doorbell","repair doorbell wiring","replace electric meter cover","replace exterior gfci outlet","replace exterior outlet cover","paint doors with primer","paint doors","paint windows","paint windows with primer","other"]},
-{n:'General',i:'📋',t:["professional carpet cleaning (whole house)","demo/cleanout labor (15 min increments)","pressure wash exterior of property","deep clean stove","deep clean refrigerator","deep clean microwave","deep clean kitchen sink","deep clean bathroom sink","deep clean toilet","deep clean tub or shower","carpet spot cleaning","deep clean window and frame","deep clean kitchen cabinets","deep clean bathroom vanity","deep clean door","basic cleaning of whole house","paint entire interior of home (enter total wall + ceiling sqft, not floor sqft)","other"]}
+{n:'General',i:'📋',t:["professional carpet cleaning (whole house)","demo/cleanout labor (15 min increments)","pressure wash exterior of property","deep clean stove","deep clean refrigerator","deep clean microwave","deep clean kitchen sink","deep clean bathroom sink","deep clean toilet","deep clean tub or shower","carpet spot cleaning","deep clean window and frame","deep clean kitchen cabinets","deep clean bathroom vanity","deep clean door","basic cleaning of whole house","paint entire interior of home (enter total wall + ceiling sqft, not floor sqft)","dumpster placement and removal (delivery + pickup + landfill + return to office)","large refuse pickup — dump truck (drive to site + load + return to office + unload into dumpster)","small refuse pickup — bags (drive + pickup + return to office + place in dumpster)","other"]}
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -1825,6 +1852,20 @@ function getTaskSubsection(task){
 }
 
 
+var SUBSEC_REMINDERS = {
+  'Electrical': 'TEST: All outlets (use outlet tester). Press TEST/RESET button on every GFCI outlet — confirm it shuts off and resets. All switches operate correctly. All lights function.',
+  'Plumbing': 'CHECK: No leaks at supply lines or drain connections. All drains flow freely without backup.',
+  'Water Heater': 'VERIFY: Hot water reaches all fixtures. Water heater operating at proper temperature.',
+  'Appliances': 'INSPECT: Refrigerator runs and holds temp — interior lights work. Microwave operates. Dishwasher runs without leaks. Oven/stove — all burners, oven, and interior lights function.',
+  'Doors & Windows': 'CHECK: All doors and windows open/close without obstruction. Locks, handles, and deadbolts operate properly. Key locks confirmed working.',
+  'Exterior Doors & Windows': 'CHECK: All exterior doors and windows open/close freely. Deadbolts, key locks, and handles confirmed working.',
+  'Exterior Electrical': 'TEST: All exterior receptacles, lights, and switches operate properly. Press TEST/RESET button on every exterior GFCI outlet — confirm it shuts off and resets.',
+  'Toilet': 'TEST: Flush properly, no running or phantom flushing. No leaks at base, tank, or supply line. Water shuts off correctly after flush.',
+  'Tub & Shower': 'CHECK: Hot and cold water operate correctly. Drain flows freely without backup. No leaks at valve, spout, or drain connections. Shower head pressure adequate.',
+  'HVAC': 'TEST: Thermostat operates correctly — system heats and cools to set temperature. All supply vents and return registers are clear of debris and have proper airflow. Filters inspected.',
+  'Safety': 'TEST: Push test button on every smoke and CO detector — alarm must sound. Check all fire extinguishers — needle must be in the GREEN zone on the pressure dial. If not in green, extinguisher must be recharged or replaced.'
+};
+
 function buildScope(){
   var list = document.getElementById('scopeList');
   list.innerHTML = '';
@@ -1878,9 +1919,59 @@ function buildScope(){
     SUBSECTION_ORDER.forEach(function(subName) {
       var tasks = grouped_tasks[subName];
       if(!tasks || tasks.length === 0) return;
+      // Count selected in this subsection
+      var selCount = tasks.filter(function(t){ return jobs[jKey(sec.n,t)]; }).length;
+
+      // Collapsible subsection header
       var subHdr = document.createElement('div');
-      subHdr.className = 'subsec-hdr';
-      subHdr.textContent = subName;
+      subHdr.className = 'subsec-hdr collapsed';
+
+      var subTitle = document.createElement('span');
+      subTitle.className = 'subsec-title';
+      subTitle.textContent = subName;
+
+      var subBadge = document.createElement('span');
+      subBadge.className = 'subsec-badge';
+      subBadge.id = 'sub-bdg-' + sec.n + '-' + subName.replace(/[^a-z0-9]/gi,'_');
+      subBadge.style.display = selCount > 0 ? 'inline-block' : 'none';
+      if(selCount > 0) subBadge.textContent = selCount;
+
+      var subChev = document.createElement('span');
+      subChev.className = 'subsec-chev';
+      subChev.innerHTML = '&#8250;';
+
+      subHdr.appendChild(subTitle);
+      subHdr.appendChild(subBadge);
+      subHdr.appendChild(subChev);
+
+      // Task container — hidden by default
+      var taskContainer = document.createElement('div');
+      taskContainer.className = 'subsec-tasks';
+      taskContainer.style.display = 'none';
+
+      // Reminder note
+      if(SUBSEC_REMINDERS[subName]){
+        var reminderEl = document.createElement('div');
+        reminderEl.className = 'subsec-reminder';
+        reminderEl.textContent = SUBSEC_REMINDERS[subName];
+        taskContainer.appendChild(reminderEl);
+      }
+
+      // Toggle on tap
+      subHdr.addEventListener('click', function(e){
+        e.stopPropagation();
+        var open = !subHdr.classList.contains('collapsed');
+        if(open){
+          subHdr.classList.add('collapsed');
+          taskContainer.style.display = 'none';
+          subChev.innerHTML = '&#8250;';
+        } else {
+          subHdr.classList.remove('collapsed');
+          taskContainer.style.display = 'block';
+          subChev.innerHTML = '&#8964;';
+        }
+      });
+
       body.appendChild(subHdr);
       tasks.forEach(function(task) {
         var key = jKey(sec.n, task);
@@ -1904,9 +1995,31 @@ function buildScope(){
         row.appendChild(cb);
         row.appendChild(lbl);
         row.appendChild(editBtn);
-        body.appendChild(row);
+        // Update badge on check/uncheck
+        (function(tc, sb){
+          cb.addEventListener('change', function(){
+            var cnt = tc.querySelectorAll('.task-row.sel').length;
+            sb.textContent = cnt;
+            sb.style.display = cnt > 0 ? 'inline-block' : 'none';
+          });
+        })(taskContainer, subBadge);
+        taskContainer.appendChild(row);
       });
+      body.appendChild(taskContainer);
     });
+
+    // Auto-expand subsections with already-checked tasks
+    setTimeout(function(){
+      card.querySelectorAll('.subsec-hdr').forEach(function(sh){
+        var tc = sh.nextElementSibling;
+        if(tc && tc.querySelectorAll && tc.querySelectorAll('.task-row.sel').length > 0){
+          sh.classList.remove('collapsed');
+          tc.style.display = 'block';
+          var chev = sh.querySelector('.subsec-chev');
+          if(chev) chev.innerHTML = '&#8964;';
+        }
+      });
+    }, 50);
 
     card.appendChild(hdr);
     card.appendChild(body);
@@ -3646,7 +3759,9 @@ var BG = {
   "pressure wash exterior of property":{m:0.0,h:4.0},
   "professional carpet cleaning (whole house)":{m:150.0,h:0.0},
   "repair carpet section":{m:50.0,h:0.0}
-};
+,
+  "dumpster placement and removal (delivery + pickup + landfill + return to office)":{m:0.0,h:4.0},
+  "large refuse pickup — dump truck (drive to site + load + return to office + unload into dumpster)":{m:0.0,h:3.0}};
 function mr(t){ return MR[nk(t)] || null; }
 function qt(t){ return QT[nk(t)] || null; }
 function effH(j){
@@ -3741,9 +3856,59 @@ function buildScope(){
     SUBSECTION_ORDER.forEach(function(subName) {
       var tasks = grouped_tasks[subName];
       if(!tasks || tasks.length === 0) return;
+      // Count selected in this subsection
+      var selCount = tasks.filter(function(t){ return jobs[jKey(sec.n,t)]; }).length;
+
+      // Collapsible subsection header
       var subHdr = document.createElement('div');
-      subHdr.className = 'subsec-hdr';
-      subHdr.textContent = subName;
+      subHdr.className = 'subsec-hdr collapsed';
+
+      var subTitle = document.createElement('span');
+      subTitle.className = 'subsec-title';
+      subTitle.textContent = subName;
+
+      var subBadge = document.createElement('span');
+      subBadge.className = 'subsec-badge';
+      subBadge.id = 'sub-bdg-' + sec.n + '-' + subName.replace(/[^a-z0-9]/gi,'_');
+      subBadge.style.display = selCount > 0 ? 'inline-block' : 'none';
+      if(selCount > 0) subBadge.textContent = selCount;
+
+      var subChev = document.createElement('span');
+      subChev.className = 'subsec-chev';
+      subChev.innerHTML = '&#8250;';
+
+      subHdr.appendChild(subTitle);
+      subHdr.appendChild(subBadge);
+      subHdr.appendChild(subChev);
+
+      // Task container — hidden by default
+      var taskContainer = document.createElement('div');
+      taskContainer.className = 'subsec-tasks';
+      taskContainer.style.display = 'none';
+
+      // Reminder note
+      if(SUBSEC_REMINDERS[subName]){
+        var reminderEl = document.createElement('div');
+        reminderEl.className = 'subsec-reminder';
+        reminderEl.textContent = SUBSEC_REMINDERS[subName];
+        taskContainer.appendChild(reminderEl);
+      }
+
+      // Toggle on tap
+      subHdr.addEventListener('click', function(e){
+        e.stopPropagation();
+        var open = !subHdr.classList.contains('collapsed');
+        if(open){
+          subHdr.classList.add('collapsed');
+          taskContainer.style.display = 'none';
+          subChev.innerHTML = '&#8250;';
+        } else {
+          subHdr.classList.remove('collapsed');
+          taskContainer.style.display = 'block';
+          subChev.innerHTML = '&#8964;';
+        }
+      });
+
       body.appendChild(subHdr);
       tasks.forEach(function(task) {
         var key = jKey(sec.n, task);
@@ -3767,9 +3932,31 @@ function buildScope(){
         row.appendChild(cb);
         row.appendChild(lbl);
         row.appendChild(editBtn);
-        body.appendChild(row);
+        // Update badge on check/uncheck
+        (function(tc, sb){
+          cb.addEventListener('change', function(){
+            var cnt = tc.querySelectorAll('.task-row.sel').length;
+            sb.textContent = cnt;
+            sb.style.display = cnt > 0 ? 'inline-block' : 'none';
+          });
+        })(taskContainer, subBadge);
+        taskContainer.appendChild(row);
       });
+      body.appendChild(taskContainer);
     });
+
+    // Auto-expand subsections with already-checked tasks
+    setTimeout(function(){
+      card.querySelectorAll('.subsec-hdr').forEach(function(sh){
+        var tc = sh.nextElementSibling;
+        if(tc && tc.querySelectorAll && tc.querySelectorAll('.task-row.sel').length > 0){
+          sh.classList.remove('collapsed');
+          tc.style.display = 'block';
+          var chev = sh.querySelector('.subsec-chev');
+          if(chev) chev.innerHTML = '&#8964;';
+        }
+      });
+    }, 50);
 
     card.appendChild(hdr);
     card.appendChild(body);
