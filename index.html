@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SF Scope Creator v15.2</title>
+<title>SF Scope Creator v15.3</title>
 <style>
 :root{
   --brand:#1B2B3A;--accent:#C85A2A;--accent2:#E8A87C;
@@ -439,7 +439,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 <div class="hdr">
   <div class="hdr-brand">
     <div class="hdr-title">Stone <em>Fortress</em></div>
-    <div class="hdr-sub">Rental Turn Scope &nbsp;v15.2</div>
+    <div class="hdr-sub">Rental Turn Scope &nbsp;v15.3</div>
   </div>
   <div class="hdr-right">
     <div class="rate-wrap">
@@ -475,48 +475,34 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 </div>
 <div class="pane" id="pSum"><div id="sumContent"></div></div>
 <div class="pane" id="pExp">
-  <div class="export-section-lbl">Print &amp; Export</div>
-  <button class="action-btn btn-print" onclick="smartPrint(false)">
-    <div class="action-btn-icon">&#128424;</div>
-    <div class="action-btn-text"><div class="action-btn-title">Print / Save PDF</div><div class="action-btn-sub">Full scope with costs &amp; materials</div></div>
-  </button>
-  <button class="action-btn btn-contractor" onclick="smartPrint(true)">
-    <div class="action-btn-icon">&#128203;</div>
-    <div class="action-btn-text"><div class="action-btn-title">Contractor Scope</div><div class="action-btn-sub">No dollar amounts &#8212; give to contractors</div></div>
-  </button>
-  <button class="action-btn btn-po" onclick="printPOCoverSheet()">
-    <div class="action-btn-icon">&#128196;</div>
-    <div class="action-btn-text"><div class="action-btn-title">PO Cover Sheet</div><div class="action-btn-sub">Labor by accounting category</div></div>
-  </button>
-  
-  
-  
-  
-  
-  <button class="action-btn btn-save-everything" onclick="saveEverything()" style="background:#1a5c1a;color:#fff;font-weight:bold;">
-    <div class="action-btn-icon">&#9989;</div>
-    <div class="action-btn-text"><div class="action-btn-title">Save Everything</div><div class="action-btn-sub">Docs + backup + new job</div></div>
-  </button>
-  <button class="action-btn btn-save-new" onclick="saveAndNewJob()" style="background:#7b3fa0;color:#fff;">
+
+  <div class="export-section-lbl">&#127968; In the Field</div>
+  <button class="action-btn" onclick="saveAndNewJob()" style="background:#7b3fa0;color:#fff;font-weight:bold;">
     <div class="action-btn-icon">&#127968;</div>
-    <div class="action-btn-text"><div class="action-btn-title">Save &amp; New Job</div><div class="action-btn-sub">Save docs &amp; start fresh</div></div>
+    <div class="action-btn-text"><div class="action-btn-title">Save &amp; New Job</div><div class="action-btn-sub">Archive this job &mdash; clear for next property</div></div>
   </button>
-  <button class="action-btn btn-import" onclick="importJobs()" style="background:#B08D57;color:#fff;">
+
+  <div class="export-section-lbl" style="margin-top:16px;">&#128248; At the Office</div>
+  <button class="action-btn" onclick="sendAllDocuments()" style="background:#1F3864;color:#fff;font-weight:bold;">
+    <div class="action-btn-icon">&#128248;</div>
+    <div class="action-btn-text"><div class="action-btn-title">Send All Documents</div><div class="action-btn-sub">Combined scope PDF + CF CSV &mdash; Share to Mail</div></div>
+  </button>
+
+  <div class="export-section-lbl" style="margin-top:16px;">&#128193; Saved Jobs &mdash; Process at Office</div>
+  <div style="font-size:11px;color:#c0392b;font-weight:bold;text-align:center;padding:4px 12px;background:#fdecea;border-radius:8px;margin:4px 8px 8px 8px;">&#9888;&#65039; Process saved jobs ONLY at the office</div>
+  <div id="archiveList"></div>
+
+  <div class="export-section-lbl" style="margin-top:16px;">&#9881;&#65039; Advanced</div>
+  <button class="action-btn" onclick="importJobs()" style="background:#B08D57;color:#fff;">
     <div class="action-btn-icon">&#128228;</div>
-    <div class="action-btn-text"><div class="action-btn-title">Import Jobs</div><div class="action-btn-sub">Restore jobs from file</div></div>
-  </button>
-  <button class="action-btn btn-clear" onclick="exportContractorForeman()" style="background:#1a5276;color:#fff;font-weight:bold;">
-    <div class="action-btn-icon">&#128196;</div>
-    <div class="action-btn-text"><div class="action-btn-title">Contractor Foreman CSV</div><div class="action-btn-sub">Download + email draft</div></div>
+    <div class="action-btn-text"><div class="action-btn-title">Import Jobs</div><div class="action-btn-sub">Restore from backup file</div></div>
   </button>
   <button class="action-btn" onclick="clearAll()">
     <div class="action-btn-icon">&#128465;</div>
-    <div class="action-btn-text"><div class="action-btn-title">Clear All Jobs</div><div class="action-btn-sub">Remove all selections for this scope</div></div>
+    <div class="action-btn-text"><div class="action-btn-title">Clear All Jobs</div><div class="action-btn-sub">Remove all selections &mdash; double confirmation required</div></div>
   </button>
   <div id="expList"></div>
-  <div class="export-section-lbl" style="margin-top:16px;">Saved Jobs</div>
-  <div style="font-size:11px;color:#c0392b;font-weight:bold;text-align:center;padding:4px 12px;background:#fdecea;border-radius:8px;margin:4px 8px 8px 8px;">Process saved jobs ONLY at the office</div>
-  <div id="archiveList"></div>
+
 </div>
 <div class="tabs">
   <button class="tab on" id="tScope" onclick="goTab('Scope')">
@@ -2183,6 +2169,102 @@ function renderArchive(){
       });
     });
   });
+}
+
+
+function sendAllDocuments(){
+  if(Object.keys(jobs).length===0){ alert('No tasks selected. Check off tasks on the Scope tab first.'); return; }
+  var addr=(document.getElementById('xAddr')||{}).value||'Scope';
+  var prep=(document.getElementById('xPrep')||{}).value||'';
+  var date=(document.getElementById('xDate')||{}).value||new Date().toISOString().slice(0,10);
+  var safe=addr.replace(/[^a-z0-9]/gi,'_').toLowerCase();
+
+  // Build combined HTML document
+  var combinedHtml='<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    +'<title>'+addr+' Rental Turn Scope</title>'
+    +'<style>body{font-family:Arial,sans-serif;margin:0;padding:16px;font-size:12px;}'
+    +'@media print{body{margin:0;padding:0;}@page{margin:0.5in;}.page-break{page-break-before:always;}}'
+    +'h2{color:#1F3864;border-bottom:2px solid #B08D57;padding-bottom:6px;margin-top:0;}'
+    +'</style></head><body>'
+    +'<h2>Full Scope (with costs) — '+addr+'</h2>'+buildPrintHtml(false)
+    +'<div class="page-break"><h2>Contractor Scope (no costs) — '+addr+'</h2></div>'+buildPrintHtml(true)
+    +'<div class="page-break"><h2>PO Cover Sheet — '+addr+'</h2></div>'+buildPOHtml()
+    +'</body></html>';
+
+  // Build CSV
+  var keys=Object.keys(jobs);
+  var headers=['Section','Section Description','Item Name','Description','Quantity',
+    'Unit Cost $','Unit','Cost Code','Markup','Markup Type',
+    'Item Type','Is Taxable?','Is Optional?','Assigned To','Internal Note'];
+  var rows=[headers];
+  var grouped={};
+  keys.forEach(function(k){
+    var j=jobs[k];
+    var entry=matchTaskToCSV(j.task);
+    var lc=entry?entry.lc:'7100 Const Supply';
+    var sec=entry?entry.sec:'7100 Construction Supplies';
+    if(!grouped[lc]) grouped[lc]={sec:sec,jobs:[]};
+    grouped[lc].jobs.push({j:j,entry:entry});
+  });
+  Object.keys(grouped).sort().forEach(function(lc){
+    var grp=grouped[lc];
+    grp.jobs.forEach(function(item){
+      var j=item.j; var entry=item.entry;
+      var qty=j.qty||1; var meas=j.meas||qty;
+      var laborCost=Math.round(effH(j)*qty*RATE*100)/100;
+      rows.push([escCsv('100 Contracted Services'),escCsv(grp.sec),
+        escCsv(lc+':'+j.task),escCsv(j.task+(j.notes?' | '+j.notes:'')),
+        escCsv(qty),escCsv(laborCost.toFixed(2)),escCsv('EA'),escCsv(lc),
+        escCsv('10'),escCsv('%'),escCsv('LBR'),escCsv('No'),escCsv('No'),
+        escCsv(prep||'SF Maintenance'),escCsv('Rental Turn - '+addr+' - '+date)]);
+      if(entry&&entry.mats&&entry.mats.length>0){
+        entry.mats.forEach(function(mat){
+          var mUnit=mat[4]; var matQty=(mUnit==='sqft'||mUnit==='lnft')?meas:qty;
+          rows.push([escCsv(grp.sec),escCsv(grp.sec),
+            escCsv(grp.sec+':'+mat[1]),escCsv(mat[1]+' for '+j.task),
+            escCsv(matQty),escCsv(mat[2]),escCsv(mUnit),escCsv(mat[0]),
+            escCsv('10'),escCsv('%'),escCsv('MTL'),escCsv('No'),escCsv('No'),
+            escCsv(mat[3]),escCsv('Rental Turn - '+addr+' - '+date)]);
+        });
+      }
+    });
+  });
+  var csv=rows.map(function(r){return r.join(',');}).join('\r\n');
+  var csvName='CF_'+safe+'_'+date+'.csv';
+
+  // Try Web Share API with files (Safari 15+ on iPad supports this)
+  var htmlFile=new File([new Blob([combinedHtml],{type:'text/html'})],
+    safe+'_scope_all.html',{type:'text/html'});
+  var csvFile=new File([new Blob([csv],{type:'text/csv'})],
+    csvName,{type:'text/csv'});
+
+  if(navigator.canShare&&navigator.canShare({files:[htmlFile,csvFile]})){
+    navigator.share({
+      title:'Rental Turn Scope — '+addr,
+      text:'Scope docs + CF CSV for '+addr+' ('+date+'). Open HTML in Safari and print to PDF.',
+      files:[htmlFile,csvFile]
+    }).catch(function(err){
+      if(err.name!=='AbortError') _sendFallback(combinedHtml,safe,csv,csvName);
+    });
+  } else {
+    _sendFallback(combinedHtml,safe,csv,csvName);
+  }
+}
+
+function _sendFallback(combinedHtml,safe,csv,csvName){
+  alert('Share Sheet not available on this browser.\n\nBoth files will download to Files.\nFrom Files, share each to Mail.');
+  var hUrl=URL.createObjectURL(new Blob([combinedHtml],{type:'text/html'}));
+  var hA=document.createElement('a');
+  hA.href=hUrl; hA.download=safe+'_scope_all.html';
+  document.body.appendChild(hA); hA.click(); document.body.removeChild(hA);
+  setTimeout(function(){ URL.revokeObjectURL(hUrl); },3000);
+  setTimeout(function(){
+    var cUrl=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    var cA=document.createElement('a');
+    cA.href=cUrl; cA.download=csvName;
+    document.body.appendChild(cA); cA.click(); document.body.removeChild(cA);
+    setTimeout(function(){ URL.revokeObjectURL(cUrl); },3000);
+  },1200);
 }
 
 function buildScope(){
