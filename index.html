@@ -566,8 +566,15 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
       </label>
     </div>
   </div>
-  <div class="sheet-footer">
-    <button class="done-btn" onclick="closeSheet()">
+  <div class="sheet-footer" style="display:flex;gap:10px;">
+    <button class="done-btn" onclick="removeSheetTask()" style="background:#c0392b;flex:1;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+      Remove Task
+    </button>
+    <button class="done-btn" onclick="closeSheet()" style="flex:2;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      Done — Save &amp; Close
+    </button>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       Done — Save &amp; Close
     </button>
@@ -3544,6 +3551,38 @@ function closeSheet(){
   }
 }
 
+function removeSheetTask(){
+  if(!_sheetKey) return;
+  var job=jobs[_sheetKey];
+  if(!job){ closeSheet(); return; }
+  var cb=document.getElementById('cb-'+_sheetKey);
+  var row=document.getElementById('tr-'+_sheetKey);
+  if(cb) cb.checked=false;
+  if(row) row.classList.remove('sel');
+  delete jobs[_sheetKey];
+  if(row){
+    var tc=row.parentElement;
+    if(tc){
+      var cnt=tc.querySelectorAll('.task-row.sel').length;
+      var bdg=tc.previousElementSibling?tc.previousElementSibling.querySelector('.subsec-badge'):null;
+      if(bdg){ bdg.textContent=cnt; bdg.style.display=cnt>0?'inline-block':'none'; }
+    }
+  }
+  var secBdg=document.getElementById('sb-'+job.section);
+  if(secBdg){
+    var cnt2=0;
+    Object.keys(jobs).forEach(function(k){ if(jobs[k].section===job.section) cnt2++; });
+    secBdg.textContent=cnt2;
+    secBdg.className=cnt2>0?'sec-bdg on':'sec-bdg';
+    var sc=document.getElementById('scnt-'+job.section);
+    if(sc) sc.textContent=cnt2>0?cnt2+' job'+(cnt2===1?'':'s')+' selected':'Tap to expand';
+  }
+  updateBadge();
+  debounceSave();
+  closeSheet();
+}
+
+
 function sheetAddPhotos(input){
   var j = jobs[_sheetKey]; if(!j) return;
   var section = j.section; var task = j.task;
@@ -4099,28 +4138,7 @@ function globalSearch(q){
   });
 }
 
-function toggleJob(section, task, cb, row){
-  var key = jKey(section, task);
-  if(cb.checked){
-    jobs[key] = {section:section, task:task, qty:1, meas:0, hrsOv:null, matsOv:null, notes:'', photos:[]};
-    row.classList.add('sel');
-    openInlineEdit(key, row);
-  } else {
-    delete jobs[key];
-    row.classList.remove('sel');
-  }
-  var bdg = document.getElementById('sb-' + section);
-  if(bdg){
-    var cnt = 0;
-    Object.keys(jobs).forEach(function(k){ if(jobs[k].section === section) cnt++; });
-    bdg.textContent = cnt;
-    bdg.className = cnt > 0 ? 'sec-bdg on' : 'sec-bdg';
-    var sc = document.getElementById('scnt-' + section);
-    if(sc) sc.textContent = cnt > 0 ? cnt + ' job' + (cnt===1?'':'s') + ' selected' : 'Tap to expand';
-  }
-  updateBadge();
-  save();
-}
+
 
 function clearAll(){
   var addr = (document.getElementById('xAddr')||{}).value || 'this property';
@@ -4172,188 +4190,10 @@ function updateSummaryTotals(){
 
 function fmt$(n){ return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
-function renderSum(){
-  // Preserve open cards and scroll before rebuilding
-  var openCards = {};
-  document.querySelectorAll('.job-card.open').forEach(function(card){
-    if(card.id) openCards[card.id] = true;
-  });
-  var sumPane = document.getElementById('pSum');
-  var scrollTop = sumPane ? sumPane.scrollTop : 0;
 
-  var el = document.getElementById('sumContent');
-  el.innerHTML = '';
-  var keys = Object.keys(jobs);
-  if(keys.length === 0){
-    el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--muted)"><div style="font-size:40px;opacity:.3">📋</div><div style="font-size:16px;font-weight:600;margin-top:10px;color:var(--slate)">No jobs selected yet</div><div style="font-size:13px;margin-top:6px">Go to the Scope tab to add jobs.</div></div>';
-    return;
-  }
-  var tM=0, tH=0;
-  keys.forEach(function(k){ var j=jobs[k]; tM+=effM(j)*j.qty; tH+=effH(j)*j.qty; });
-  var tL=tH*RATE, tC=tM+tL;
-
-  var sc = document.createElement('div'); sc.className='sum-cards';
-  sc.innerHTML='<div class="sum-total-card"><div class="sum-total-lbl">Total Budget</div><div class="sum-total-val" id="sum-total">'+fmt$(tC)+'</div></div>'+'<div class="sum-sub-cards">'+'<div class="sum-sub-card"><div class="sum-sub-lbl">Materials</div><div class="sum-sub-val c-amber" id="sum-mat">'+fmt$(tM)+'</div></div>'+'<div class="sum-sub-card"><div class="sum-sub-lbl">Labor ('+tH.toFixed(1)+'h)</div><div class="sum-sub-val c-green" id="sum-labor">'+fmt$(tL)+'</div></div>'+'</div>';
-  el.appendChild(sc);
-
-  // Group by section
-  var bySec = {};
-  keys.forEach(function(k){ var j=jobs[k]; if(!bySec[j.section]) bySec[j.section]=[]; bySec[j.section].push(k); });
-
-  Object.keys(bySec).forEach(function(sec){
-    var lbl = document.createElement('div'); lbl.className='sum-sec-lbl'; lbl.textContent=sec;
-    el.appendChild(lbl);
-    bySec[sec].forEach(function(key){
-      var j = jobs[key];
-      var h=effH(j)*j.qty, m=effM(j)*j.qty, l=h*RATE, tot=m+l;
-      var mtype=qt(j.task), isM=!!mtype;
-
-      var card=document.createElement('div'); card.className='job-card';
-
-      // Header
-      var hdr=document.createElement('div'); hdr.className='job-hdr';
-      hdr.innerHTML='<div><div class="job-title">'+j.task+'</div><div class="job-sub">'+sec+'</div></div>'
-        +'<div class="job-cost"><div class="job-total">'+fmt$(tot)+'</div><div class="job-cost-sub">'+h.toFixed(2)+'h &middot; '+fmt$(m)+' mat</div></div>';
-      hdr.addEventListener('click', function(){ card.classList.toggle('open'); });
-
-      var body=document.createElement('div'); body.className='job-body';
-
-      // Qty / Measurement
-      var frow=document.createElement('div'); frow.className='frow';
-      var lbl2=document.createElement('label'); lbl2.textContent=isM?(mtype==='sqft'?'Square Feet':'Linear Feet'):'Quantity';
-      frow.appendChild(lbl2);
-      if(isM){
-        var mrow=document.createElement('div'); mrow.className='mrow';
-        var mi=document.createElement('input'); mi.type='number'; mi.min='0'; mi.step='1'; mi.className='finput'; mi.value=j.meas||0;
-        mi.addEventListener('input', function(){ jobs[key].meas=parseFloat(mi.value)||0; debounceSave(); updateJobCost(key); });
-        var mu=document.createElement('span'); mu.className='munit'; mu.textContent=mtype==='sqft'?'sq ft':'ln ft';
-        mrow.appendChild(mi); mrow.appendChild(mu); frow.appendChild(mrow);
-      } else {
-        var qw=document.createElement('div'); qw.style.cssText='display:flex;align-items:center;gap:8px';
-        var qm=document.createElement('button'); qm.type='button'; qm.textContent='-'; qm.className='qty-btn';
-        var qv=document.createElement('span'); qv.textContent=j.qty; qv.className='qty-val';
-        var qp=document.createElement('button'); qp.type='button'; qp.textContent='+'; qp.className='qty-btn';
-        qm.type='button'; qm.addEventListener('click', function(e){ e.stopPropagation(); if(jobs[key].qty>1){jobs[key].qty--; debounceSave(); updateJobCost(key);} });
-        qp.type='button'; qp.addEventListener('click', function(e){ e.stopPropagation(); jobs[key].qty++; debounceSave(); updateJobCost(key); });
-        qw.appendChild(qm); qw.appendChild(qv); qw.appendChild(qp); frow.appendChild(qw);
-      }
-      body.appendChild(frow);
-
-      // Hours
-      var hrow=document.createElement('div'); hrow.className='frow';
-      var hlbl=document.createElement('label'); hlbl.textContent='Est. Hours'+(j.hrsOv!==null?' (custom)':'');
-      hrow.appendChild(hlbl);
-      var hw=document.createElement('div'); hw.style.cssText='display:flex;align-items:center;gap:5px';
-      var hi=document.createElement('input'); hi.type='number'; hi.min='0'; hi.step='0.25'; hi.value=h.toFixed(2);
-      hi.className='finput'+(j.hrsOv!==null?' ov':'');
-      hi.addEventListener('change', function(){ jobs[key].hrsOv=parseFloat(hi.value)||0; debounceSave(); renderSum(); });
-      hw.appendChild(hi);
-      if(j.hrsOv!==null){
-        var rl=document.createElement('span'); rl.className='reset-lnk'; rl.textContent='Reset';
-        rl.addEventListener('click', function(){ jobs[key].hrsOv=null; renderSum(); });
-        hw.appendChild(rl);
-      }
-      hrow.appendChild(hw); body.appendChild(hrow);
-
-      // Notes
-      var nl=document.createElement('span'); nl.className='flbl'; nl.textContent='Notes';
-      var nta=document.createElement('textarea'); nta.className='notes-ta'; nta.placeholder='Job notes…'; nta.value=j.notes||'';
-      nta.addEventListener('input', function(){ jobs[key].notes=nta.value; });
-      body.appendChild(nl); body.appendChild(nta);
-
-      // Materials
-      var ml=document.createElement('span'); ml.className='flbl'; ml.textContent='Materials'+(j.matsOv?(' (custom)'):'');
-      body.appendChild(ml);
-      var mats=effMats(j);
-      var ul=document.createElement('ul'); ul.className='mat-list';
-      if(mats.length===0){ var li=document.createElement('li'); li.style.fontStyle='italic'; li.style.color='var(--muted)'; li.textContent='None listed'; ul.appendChild(li); }
-      else { mats.forEach(function(m){ var li=document.createElement('li'); li.textContent=m; ul.appendChild(li); }); }
-      body.appendChild(ul);
-
-      var eb=document.createElement('button'); eb.type='button'; eb.style.cssText='width:100%;background:none;border:1px solid var(--border);border-radius:7px;padding:7px 12px;font-size:12px;font-family:inherit;color:var(--slate);cursor:pointer;text-align:center;margin-bottom:2px';
-      eb.textContent='✎ Edit materials';
-      var ea=document.createElement('div'); ea.className='mat-edit-wrap';
-      var eta=document.createElement('textarea'); eta.className='mat-ta'; eta.value=mats.join('\n'); eta.placeholder='One material per line…';
-      var acts=document.createElement('div'); acts.className='mat-acts';
-      var sv=document.createElement('button'); sv.type='button'; sv.className='btn-sv'; sv.textContent='Save';
-      var cn=document.createElement('button'); cn.type='button'; cn.className='btn-cn'; cn.textContent='Cancel';
-      var rs=document.createElement('button'); rs.type='button'; rs.className='btn-rs'; rs.textContent='Reset to default';
-      acts.appendChild(sv); acts.appendChild(cn); acts.appendChild(rs);
-      ea.appendChild(eta); ea.appendChild(acts);
-      eb.addEventListener('click', function(){ ea.classList.toggle('on'); });
-      cn.addEventListener('click', function(){ ea.classList.remove('on'); });
-      sv.addEventListener('click', function(){ jobs[key].matsOv=eta.value.split('\n').map(function(s){return s.trim();}).filter(Boolean); renderSum(); });
-      rs.addEventListener('click', function(){ jobs[key].matsOv=null; renderSum(); });
-      body.appendChild(eb); body.appendChild(ea);
-
-      // Photos
-      var pl=document.createElement('span'); pl.className='flbl'; pl.textContent='Photos';
-      body.appendChild(pl);
-      var pg=document.createElement('div'); pg.className='photo-grid';
-      (j.photos||[]).forEach(function(src,idx){
-        var wrap=document.createElement('div'); wrap.className='photo-thumb';
-        var img=document.createElement('img'); img.src=src;
-        var rm=document.createElement('button'); rm.type='button'; rm.className='photo-rm'; rm.textContent='x';
-        rm.addEventListener('click', function(){ jobs[key].photos.splice(idx,1); renderSum(); });
-        wrap.appendChild(img); wrap.appendChild(rm); pg.appendChild(wrap);
-      });
-      body.appendChild(pg);
-
-      var pbtns=document.createElement('div'); pbtns.className='photo-btns';
-      var camlbl=document.createElement('label'); camlbl.className='photo-btn';
-      camlbl.innerHTML='📷 Camera';
-      var cfi=document.createElement('input'); cfi.type='file'; cfi.accept='image/*'; cfi.setAttribute('capture','environment');
-      cfi.addEventListener('change', function(e){
-        Array.from(e.target.files).forEach(function(file){
-          var r=new FileReader(); r.onload=function(ev){ jobs[key].photos.push(ev.target.result); renderSum(); }; r.readAsDataURL(file);
-        });
-      });
-      camlbl.appendChild(cfi); pbtns.appendChild(camlbl);
-
-      var gallbl=document.createElement('label'); gallbl.className='photo-btn';
-      gallbl.innerHTML='🖼 Gallery';
-      var gfi=document.createElement('input'); gfi.type='file'; gfi.accept='image/*'; gfi.multiple=true;
-      gfi.addEventListener('change', function(e){
-        Array.from(e.target.files).forEach(function(file){
-          var r=new FileReader(); r.onload=function(ev){ jobs[key].photos.push(ev.target.result); renderSum(); }; r.readAsDataURL(file);
-        });
-      });
-      gallbl.appendChild(gfi); pbtns.appendChild(gallbl);
-      body.appendChild(pbtns);
-
-      card.appendChild(hdr); card.appendChild(body); el.appendChild(card);
-    });
-  });
-
-  // Restore open cards and scroll
-  Object.keys(openCards).forEach(function(id){
-    var card = document.getElementById(id);
-    if(card) card.classList.add('open');
-  });
-  if(sumPane) sumPane.scrollTop = scrollTop;
-}
 
 // ── Export tab ────────────────────────────────────────────────────────────────
-function renderExp(){
-  var el=document.getElementById('expList'); el.innerHTML='';
-  var keys=Object.keys(jobs); if(keys.length===0) return;
-  var tM=0,tH=0;
-  keys.forEach(function(k){ var j=jobs[k]; tM+=effM(j)*j.qty; tH+=effH(j)*j.qty; });
-  var tL=tH*RATE,tC=tM+tL;
-  var sc=document.createElement('div'); sc.className='sum-cards';
-  sc.innerHTML='<div class="sum-card full"><div class="sum-lbl">Total</div><div class="sum-val blue">'+fmt$(tC)+'</div></div>'
-    +'<div class="sum-card"><div class="sum-lbl">Materials</div><div class="sum-val amber">'+fmt$(tM)+'</div></div>'
-    +'<div class="sum-card"><div class="sum-lbl">Labor</div><div class="sum-val green">'+fmt$(tL)+'</div></div>';
-  el.appendChild(sc);
-  var lbl=document.createElement('div'); lbl.className='sum-sec-lbl'; lbl.textContent=keys.length+' Selected Jobs'; el.appendChild(lbl);
-  keys.forEach(function(key){
-    var j=jobs[key]; var h=effH(j)*j.qty,m=effM(j)*j.qty,l=h*RATE,tot=m+l;
-    var row=document.createElement('div'); row.style.cssText='background:#fff;border-radius:8px;padding:11px 13px;margin-bottom:7px;box-shadow:0 2px 5px rgba(0,0,0,.07);display:flex;align-items:center;justify-content:space-between';
-    row.innerHTML='<div><div style="font-size:13px;font-weight:600">'+j.task+'</div><div style="font-size:11px;color:var(--muted)">'+j.section+'</div></div>'
-      +'<div style="text-align:right"><div style="font-size:14px;font-weight:700;color:var(--blue)">'+fmt$(tot)+'</div><div style="font-size:10px;color:var(--muted)">'+h.toFixed(2)+'h &middot; '+fmt$(m)+' mat</div></div>';
-    el.appendChild(row);
-  });
-}
+
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
