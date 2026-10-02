@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SF Scope Creator v14.7</title>
+<title>SF Scope Creator v15.1</title>
 <style>
 :root{
   --brand:#1B2B3A;--accent:#C85A2A;--accent2:#E8A87C;
@@ -439,7 +439,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 <div class="hdr">
   <div class="hdr-brand">
     <div class="hdr-title">Stone <em>Fortress</em></div>
-    <div class="hdr-sub">Rental Turn Scope &nbsp;v14.7</div>
+    <div class="hdr-sub">Rental Turn Scope &nbsp;v15.1</div>
   </div>
   <div class="hdr-right">
     <div class="rate-wrap">
@@ -505,11 +505,18 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
     <div class="action-btn-icon">&#128228;</div>
     <div class="action-btn-text"><div class="action-btn-title">Import Jobs</div><div class="action-btn-sub">Restore jobs from file</div></div>
   </button>
-  <button class="action-btn btn-clear" onclick="clearAll()">
+  <button class="action-btn btn-clear" onclick="exportContractorForeman()" style="background:#1a5276;color:#fff;font-weight:bold;">
+    <div class="action-btn-icon">&#128196;</div>
+    <div class="action-btn-text"><div class="action-btn-title">Contractor Foreman CSV</div><div class="action-btn-sub">Download + email draft</div></div>
+  </button>
+  <button class="action-btn" onclick="clearAll()">
     <div class="action-btn-icon">&#128465;</div>
     <div class="action-btn-text"><div class="action-btn-title">Clear All Jobs</div><div class="action-btn-sub">Remove all selections for this scope</div></div>
   </button>
   <div id="expList"></div>
+  <div class="export-section-lbl" style="margin-top:16px;">Saved Jobs</div>
+  <div style="font-size:11px;color:#c0392b;font-weight:bold;text-align:center;padding:4px 12px;background:#fdecea;border-radius:8px;margin:4px 8px 8px 8px;">Process saved jobs ONLY at the office</div>
+  <div id="archiveList"></div>
 </div>
 <div class="tabs">
   <button class="tab on" id="tScope" onclick="goTab('Scope')">
@@ -1875,6 +1882,302 @@ var SUBSEC_REMINDERS = {
   'Pressure Wash': 'CHECK: All exterior surfaces rinsed clean. No streaking on siding, walkways, or driveway.'
 };
 
+
+// ═══════════════════════════════════════
+// CONTRACTOR FOREMAN CSV EXPORT
+// ═══════════════════════════════════════
+var TASK_CSV_MAP = [
+  {kws:['install carpet full room','replace carpet'],lc:'5530 Floor Labor',sec:'5530 Flooring',mats:[['5530-001','CARPET','1420.78','Mohawk Carpet','sqft'],['5530-002','CARPET PAD ROLL','45.00','Mohawk Carpet','sqft']]},
+  {kws:['repair carpet section'],lc:'5530 Floor Labor',sec:'5530 Flooring',mats:[['5530-001','CARPET','1420.78','Mohawk Carpet','EA']]},
+  {kws:['replace flooring with click lock','vinyl plank','click lock'],lc:'5530 Floor Labor',sec:'5530 Flooring',mats:[['5530-014','Vinyl Click Lock Down','1693.23','Mohawk Carpet','sqft'],['5530-005','Floor moulding Allspice','53.66','Lowes','lnft']]},
+  {kws:['hardwood floor sanding'],lc:'5530 Floor Labor',sec:'5530 Flooring',mats:[]},
+  {kws:['replace bull nose stair transition'],lc:'5530 Floor Labor',sec:'5530 Flooring',mats:[['5530-011','Stair nosing Allspice','33.43','Lowes','EA']]},
+  {kws:['subfloor repair'],lc:'5100 Drywall Labor',sec:'5100 Drywall',mats:[['3100-088','Sheeting Osb 3/4X4X8','21.42','Lowes','EA']]},
+  {kws:['repair large wall damage'],lc:'5100 Drywall Labor',sec:'5100 Drywall',mats:[['5100-002','1/2x4x10 sheet','19.11','ABC Interiors Inc','EA'],['5100-038','foam adhesive cans','103.15','ABC Interiors Inc','EA'],['5100-049','USG blue lid joint compound','22.17','ABC Interiors Inc','EA']]},
+  {kws:['repair large ceiling damage'],lc:'5100 Drywall Labor',sec:'5100 Drywall',mats:[['5100-002','1/2x4x10 sheet','19.11','ABC Interiors Inc','EA'],['5100-049','USG blue lid joint compound','22.17','ABC Interiors Inc','EA']]},
+  {kws:['repair superficial wall','repair superficial ceiling','repair small holes'],lc:'5100 Drywall Labor',sec:'5100 Drywall',mats:[['5100-049','USG blue lid joint compound','22.17','ABC Interiors Inc','EA']]},
+  {kws:['wall skim coat'],lc:'5100 Drywall Labor',sec:'5100 Drywall',mats:[['5100-050','USG green lid all purpose joint','19.24','ABC Interiors Inc','sqft']]},
+  {kws:['paint walls','paint ceiling','paint entire interior'],lc:'5300 Interior Paint Labor',sec:'5300 Interior Paint',mats:[['5300-003','Wall Agreeable Grey','30.74','The Sherwin Williams Co','sqft'],['5300-005','Ceiling Flat White','28.22','The Sherwin Williams Co','sqft']]},
+  {kws:['paint walls with primer','paint ceiling with primer'],lc:'5300 Interior Paint Labor',sec:'5300 Interior Paint',mats:[['5300-007','primer KILZ 1gal','22.57','The Sherwin Williams Co','sqft'],['5300-003','Wall Agreeable Grey','30.74','The Sherwin Williams Co','sqft']]},
+  {kws:['paint trim and casing','paint baseboard'],lc:'5300 Interior Paint Labor',sec:'5300 Interior Paint',mats:[['5300-012','Trim Casing Extra White','35.82','The Sherwin Williams Co','lnft']]},
+  {kws:['recaulk vanity','recaulk shower','recaulk tub','caulk with 100% silicone'],lc:'5300 Interior Paint Labor',sec:'5300 Interior Paint',mats:[['5300-014','Silicone Rubber Ap White','10.91','Lowes','EA']]},
+  {kws:['paint exterior siding','paint doors','paint windows'],lc:'4200 Exterior Paint Labor',sec:'4200 Exterior Paint',mats:[['4200-016','Satin Exterior Paint','55.90','Lowes','sqft']]},
+  {kws:['replace base trim','replace casing trim'],lc:'5200 Trim Door Labor',sec:'5200 Trim & Doors',mats:[['5200-143','Trim Primed Colon 3 1/4X9/16X12 10Pk','97.09','Lowes','lnft']]},
+  {kws:['replace interior door'],lc:'5200 Trim Door Labor',sec:'5200 Trim & Doors',mats:[['5200-102','prehung 30X80 left hand','115.36','Lowes','EA'],['5200-048','hinge 3 1/2in 12pk satin','48.31','Lowes','EA'],['5200-056','Knob Interior Bed/Bath Satin','16.62','Lowes','EA']]},
+  {kws:['replace bifold door'],lc:'5200 Trim Door Labor',sec:'5200 Trim & Doors',mats:[['5200-011','Bifold 30X80','87.81','Lowes','EA'],['5200-016','Bifold Door track Kit 48in','14.80','Lowes On Account','EA']]},
+  {kws:['replace closet racks','replace pantry racks'],lc:'5200 Trim Door Labor',sec:'5200 Trim & Doors',mats:[['5200-017','Closet Wire Shelf 12Ftx12In For Closet','26.47','Lowes','lnft']]},
+  {kws:['replace door hinges'],lc:'5200 Trim Door Labor',sec:'5200 Trim & Doors',mats:[['5200-048','hinge 3 1/2in 12pk satin','48.31','Lowes','EA']]},
+  {kws:['replace pass thru door knobs','replace locking door knobs'],lc:'5200 Trim Door Labor',sec:'5200 Trim & Doors',mats:[['5200-056','Knob Interior Bed/Bath Satin','16.62','Lowes','EA']]},
+  {kws:['replace hinge door stop','replace floor door stop'],lc:'5200 Trim Door Labor',sec:'5200 Trim & Doors',mats:[['5200-036','Door Stop Trim Mounted 5 Pk','9.79','Lowes','EA']]},
+  {kws:['stair baluster'],lc:'5200 Trim Door Labor',sec:'5200 Trim & Doors',mats:[['5200-123','Stair Baluster top square','98.80','Lowes','EA']]},
+  {kws:['stair tread','stair tred'],lc:'5200 Trim Door Labor',sec:'5200 Trim & Doors',mats:[['5200-127','Stair Tread 11.5x48 unfinished','54.38','Lowes','EA']]},
+  {kws:['replace handrail'],lc:'5200 Trim Door Labor',sec:'5200 Trim & Doors',mats:[['5200-040','Handrail Finished 12ft with Brackets','60.66','Home Depot Credit Services','EA']]},
+  {kws:['replace newel post'],lc:'5200 Trim Door Labor',sec:'5200 Trim & Doors',mats:[['5200-125','Stair Post Traditional Ball Top 3X48','53.97','Lowes','EA']]},
+  {kws:['replace exterior door'],lc:'3300 Window Door Labor',sec:'3300 Windows & Doors',mats:[['3300-021','Pre-Hung Exterior 32 X 80 Rh Inswing','287.57','Lowes','EA'],['3300-012','knob entry w/deadbolt 1pk','31.97','Lowes','EA']]},
+  {kws:['replace exterior window'],lc:'3300 Window Door Labor',sec:'3300 Windows & Doors',mats:[['3300-049','Window Size','211.94','Lowes','EA']]},
+  {kws:['replace deadbolt'],lc:'3300 Window Door Labor',sec:'3300 Windows & Doors',mats:[['3300-010','knob deadbolt only 1PK','16.02','Lowes On Account','EA']]},
+  {kws:['replace exterior door weatherstripping'],lc:'3300 Window Door Labor',sec:'3300 Windows & Doors',mats:[['3300-038','sweep white 36in','11.68','Lowes','EA']]},
+  {kws:['replace wood trim/brick molding'],lc:'3300 Window Door Labor',sec:'3300 Windows & Doors',mats:[['5200-063','Lumber 1X5.5X12 PVC TRIM BOARD','21.55','Lowes','lnft']]},
+  {kws:['replace wall cabinet','replace base cabinet','replace wall cabinets','replace base cabinets'],lc:'5410 Cabinet Labor',sec:'5410 Cabinets',mats:[['5410-010','Base 24In','201.00','Lowes','EA'],['5410-026','Wall 24In 2 Door','173.69','Lowes','EA']]},
+  {kws:['replace cabinet knobs'],lc:'5410 Cabinet Labor',sec:'5410 Cabinets',mats:[['5410-036','cab knobs kitchen 10pk','21.02','Lowes','EA']]},
+  {kws:['replace cabinet hinges'],lc:'5410 Cabinet Labor',sec:'5410 Cabinets',mats:[['5200-048','hinge 3 1/2in 12pk satin','48.31','Lowes','EA']]},
+  {kws:['replace kitchen countertop with granite'],lc:'5450 Countertop Labor',sec:'5450 Countertop',mats:[['5450-000','5450 Countertop Material','3647.46','Cabinet & Stone Depot, LLC','EA']]},
+  {kws:['replace countertop laminate'],lc:'5450 Countertop Labor',sec:'5450 Countertop',mats:[['5450-009','Black 6 Straight','499.73','Lowes','lnft']]},
+  {kws:['replace dishwasher'],lc:'5430 Appliance Labor',sec:'5430 Appliances',mats:[['5430-004','Dishwasher white','365.30','Lowes','EA'],['5430-002','Dishwasher install kit','48.98','Lowes','EA']]},
+  {kws:['replace microwave'],lc:'5430 Appliance Labor',sec:'5430 Appliances',mats:[['5430-008','Microwave white','189.05','Lowes On Account','EA']]},
+  {kws:['replace refrigerator'],lc:'5430 Appliance Labor',sec:'5430 Appliances',mats:[]},
+  {kws:['replace stove','replace range'],lc:'5430 Appliance Labor',sec:'5430 Appliances',mats:[['5430-018','Universal Gas Hookup Kit','30.19','Lowes On Account','EA']]},
+  {kws:['replace toilet'],lc:'5520 Finish Plumb Labor',sec:'5520 Finish Plumbing',mats:[['5520-028','toilet full assembly oblong','91.07','Lowes','EA'],['5520-031','toilet ring 3 in w bolts','5.97','Lowes','EA'],['5520-033','toilet supply line 3/8x7/8x12','4.48','Lowes','EA']]},
+  {kws:['replace wax ring'],lc:'5520 Finish Plumb Labor',sec:'5520 Finish Plumbing',mats:[['5520-031','toilet ring 3 in w bolts','5.97','Lowes','EA']]},
+  {kws:['replace jonny bolts'],lc:'5520 Finish Plumb Labor',sec:'5520 Finish Plumbing',mats:[['5520-025','toilet bolts repair kit','9.67','Lowes','EA']]},
+  {kws:['replace toilet paper holder'],lc:'5620 Bath Labor',sec:'5620 Bath',mats:[['5620-005','hardware toilet paper holder bn','17.87','Lowes','EA']]},
+  {kws:['replace hand towel bar'],lc:'5620 Bath Labor',sec:'5620 Bath',mats:[['5620-006','hardware towel ring bn','17.65','Lowes','EA']]},
+  {kws:['replace medicine cabinet'],lc:'5620 Bath Labor',sec:'5620 Bath',mats:[['5620-008','medicine cabinet full bath-3/4','82.70','Lowes','EA']]},
+  {kws:['replace single bowl sink','replace double bowl sink'],lc:'5520 Finish Plumb Labor',sec:'5520 Finish Plumbing',mats:[['5520-011','kitchen sink assembly','124.52','Lowes','EA'],['5520-008','FAUCET KITCHEN','114.28','Lowes','EA']]},
+  {kws:['replace faucet'],lc:'5520 Finish Plumb Labor',sec:'5520 Finish Plumbing',mats:[['5520-044','Vanity faucet nickel','62.77','Lowes','EA'],['5520-024','sink supply line 20x3/8x1/2 npt','8.15','Lowes','EA']]},
+  {kws:['replace tub surround'],lc:'5620 Bath Labor',sec:'5620 Bath',mats:[['5520-049','tub wall surround 5 piece','118.74','Lowes','EA'],['5520-040','tub wall glue frp adhesive','46.28','Lowes','EA']]},
+  {kws:['replace shower valve','replace shower head'],lc:'5520 Finish Plumb Labor',sec:'5520 Finish Plumbing',mats:[['5520-038','Trim Kit Tub/Shower Amer Stand','74.20','Lowes','EA']]},
+  {kws:['replace tub spout'],lc:'5520 Finish Plumb Labor',sec:'5520 Finish Plumbing',mats:[['5520-039','tub faucet single','77.36','Lowes On Account','EA']]},
+  {kws:['replace vanity small','replace vanity medium','replace vanity large','replace vanity'],lc:'5410 Cabinet Labor',sec:'5410 Cabinets',mats:[['5410-044','Vanity 18 in bathroom','125.10','Lowes On Account','EA'],['5520-044','Vanity faucet nickel','62.77','Lowes','EA']]},
+  {kws:['replace drain stopper','replace drain plumbing','repair drain plumbing','unclog drain'],lc:'5520 Finish Plumb Labor',sec:'5520 Finish Plumbing',mats:[['5520-002','contin waste 1 1/2 w/tail','3.33','Williamsport Noland','EA']]},
+  {kws:['replace supply line','replace 1/4 turn ball valves'],lc:'5520 Finish Plumb Labor',sec:'5520 Finish Plumbing',mats:[['5520-024','sink supply line 20x3/8x1/2 npt','8.15','Lowes','EA']]},
+  {kws:['replace water heater'],lc:'3700 Rough Plumb Labor',sec:'3700 Rough Plumbing',mats:[['3700-242','water heater 40 gal short elec','417.87','Lowes','EA'],['3700-236','water heater runoff tube','17.04','Williamsport Noland','EA']]},
+  {kws:['diagnose/repair gas lines','gas lines and connections'],lc:'3600 HVAC Labor',sec:'3600 Rough HVAC',mats:[['3600-097','gastite pipe 1/2 in','860.00','Williamsport Noland','lnft']]},
+  {kws:['replace well pump','repair well pump'],lc:'1430 Water Labor',sec:'1430 Water Line',mats:[['1430-005','Jet Well Pump 1hp','382.89','Williamsport Noland','EA']]},
+  {kws:['cap/seal well casing'],lc:'1430 Water Labor',sec:'1430 Water Line',mats:[['1430-119','PA-800NL 1 PITLESS ADPT','83.69','Williamsport Noland','EA']]},
+  {kws:['pump/service septic'],lc:'1000 Prelim Labor',sec:'1000 Prelim',mats:[]},
+  {kws:['replace circuit breaker','add circuit to panel'],lc:'3800 Rough Elec Labor',sec:'3800 Rough Electric',mats:[['3800-082','Siemens Q115 15 amp single pole','6.87','Scott Electric','EA']]},
+  {kws:['replace/reattach vent fan','replace vent fan'],lc:'3800 Rough Elec Labor',sec:'3800 Rough Electric',mats:[['3800-050','BROAN BEL6 60CFM FAN/LIGHT','68.65','Lowes','EA']]},
+  {kws:['replace gfci outlet','replace 15 amp outlet','replace 20 amp outlet'],lc:'5700 Finish Elec Labor',sec:'5700 Finish Electric',mats:[['5700-037','outlet 20 amp gfci','32.87','Lowes','EA'],['5700-060','cover gfci outlet','2.74','Lowes','EA']]},
+  {kws:['replace stove outlet'],lc:'5700 Finish Elec Labor',sec:'5700 Finish Electric',mats:[['5700-040','outlet 50 amp stove flush mount','7.80','Lowes On Account','EA']]},
+  {kws:['replace dryer outlet'],lc:'5700 Finish Elec Labor',sec:'5700 Finish Electric',mats:[['5700-038','Outlet 30 Amp 4 Prong Flush Mount','8.92','Lowes On Account','EA']]},
+  {kws:['replace 2 way switch','replace 3 way switch','replace 4 way switch'],lc:'5700 Finish Elec Labor',sec:'5700 Finish Electric',mats:[['5700-057','Switch Single Pole White Toggle','2.32','Lowes','EA'],['5700-011','Cover Switch Single','3.38','Lowes','EA']]},
+  {kws:['replace outlet cover'],lc:'5700 Finish Elec Labor',sec:'5700 Finish Electric',mats:[['5700-009','cover outlet single white','2.87','Lowes','EA']]},
+  {kws:['replace switch cover'],lc:'5700 Finish Elec Labor',sec:'5700 Finish Electric',mats:[['5700-011','Cover Switch Single','3.38','Lowes','EA']]},
+  {kws:['replace ceiling light','replace can light','replace flush mount','replace hanging ceiling light','replace wall mount light'],lc:'5700 Finish Elec Labor',sec:'5700 Finish Electric',mats:[['5700-027','light ceiling boob 13in nickel','28.37','Lowes','EA'],['5700-025','LED 60W A19, 16CT','17.25','Lowes','EA']]},
+  {kws:['repair ceiling light/fan combo','replace ceiling light/fan combo'],lc:'5700 Finish Elec Labor',sec:'5700 Finish Electric',mats:[['5700-029','light chandelier','59.47','Lowes','EA'],['5700-025','LED 60W A19, 16CT','17.25','Lowes','EA']]},
+  {kws:['replace doorbell'],lc:'5700 Finish Elec Labor',sec:'5700 Finish Electric',mats:[['5700-015','Doorbell wired','25.48','Lowes','EA']]},
+  {kws:['replace batteries in smoke','replace battery operated smoke','replace wireless interconnected smoke','replace wired smoke'],lc:'5700 Finish Elec Labor',sec:'5700 Finish Electric',mats:[['5700-052','Smoke/carbon combo - hard wire','53.25','Lowes','EA']]},
+  {kws:['replace co detector only'],lc:'5700 Finish Elec Labor',sec:'5700 Finish Electric',mats:[['5700-051','Smoke/carbon combo - battery','40.98','Lowes','EA']]},
+  {kws:['replace hvac thermostat','hvac thermostat'],lc:'3600 HVAC Labor',sec:'3600 Rough HVAC',mats:[['3600-115','Hvac T-Stat 1H/1C','62.77','Williamsport Noland','EA']]},
+  {kws:['replace HVAC filter','hvac filter'],lc:'3600 HVAC Labor',sec:'3600 Rough HVAC',mats:[['3600-080','FILTER 20X20 SH','11.44','Williamsport Noland','EA']]},
+  {kws:['replace ductwork','repair/reconnect ductwork'],lc:'3600 HVAC Labor',sec:'3600 Rough HVAC',mats:[['3600-085','FLEX R4.2 6x25','33.66','Williamsport Noland','lnft']]},
+  {kws:['hvac register','hvac supply floor register'],lc:'3600 HVAC Labor',sec:'3600 Rough HVAC',mats:[['3600-035','boot 5 in straight floor','6.22','Williamsport Noland','EA']]},
+  {kws:['replace gutter','repair/reattach gutter','clean gutters'],lc:'3910 Gutter Labor',sec:'3910 Gutters',mats:[['3910-022','Gutter K Style 5X120','15.28','Lowes','lnft']]},
+  {kws:['replace downspout','reattach downspout'],lc:'3910 Gutter Labor',sec:'3910 Gutters',mats:[['3910-005','Gutter Downspout 3X4X10','17.08','Lowes','lnft']]},
+  {kws:['replace gutter end cap'],lc:'3910 Gutter Labor',sec:'3910 Gutters',mats:[['3910-002','corrugated downspout adapter','6.36','Lowes','EA']]},
+  {kws:['repair roof','replace roof'],lc:'4100 Roofing Labor',sec:'4100 Roof',mats:[['4100-124','Shingle Trud Duration Onyx 32.8 Sqft','43.00','ABC Supply Co Inc','sqft'],['4100-094','Oc Ice And Water Barrier','81.32','ABC Supply Co Inc','sqft']]},
+  {kws:['replace metal roof'],lc:'4100 Roofing Labor',sec:'4100 Roof',mats:[['4100-045','Metal Roof Panels','57.85','Turbo Metal Roof Supplies','sqft']]},
+  {kws:['replace roof vent','repair/reseal roof vent'],lc:'4100 Roofing Labor',sec:'4100 Roof',mats:[['4100-005','Boot Vent flashing 1/4tox8','36.55','Home Depot Credit Services','EA']]},
+  {kws:['repair vinyl siding','repair wood siding','install siding'],lc:'3400 Siding Labor',sec:'3400 Siding',mats:[['3400-007','Dutch Lap 4.5 Panel','11.29','Lowes','sqft'],['3400-015','J Chan','7.76','Lowes On Account','lnft']]},
+  {kws:['apply parging'],lc:'3400 Siding Labor',sec:'3400 Siding',mats:[['2000-011','Cement Mortar Mason Mix 80Lb','9.74','Lowes On Account','EA']]},
+  {kws:['add/replace attic insulation (blown)'],lc:'4400 Insulation Labor',sec:'4400 Insulation',mats:[['4400-002','Insulation Blowin Loosefill 110.7sq','623.36','Lowes','sqft']]},
+  {kws:['add/replace attic insulation (batt)','install faced insulation'],lc:'4400 Insulation Labor',sec:'4400 Insulation',mats:[['4400-005','Insulation R-13 15inx32ft Faced','20.09','Mifflinburg Lumber','sqft']]},
+  {kws:['replace porch railing','replace exterior handrail'],lc:'6450 Deck Labor',sec:'6450 Deck Porches',mats:[['6450-035','Deck rail kit wood treat 6ft','63.46','Lowes','lnft']]},
+  {kws:['repair steps','replace porch/patio boards'],lc:'6450 Deck Labor',sec:'6450 Deck Porches',mats:[['6450-061','Lumber 2X4X8 - TREATED','3.55','Lowes','EA']]},
+  {kws:['grass seeding'],lc:'6600 Landscape Labor',sec:'6600 Landscaping',mats:[['6600-009','Grass Seed','33.23','Ficks Hardware','sqft']]},
+  {kws:['demo/cleanout labor','dumpster placement','large refuse pickup','small refuse pickup','pressure wash exterior','basic cleaning','deep clean','carpet spot','professional carpet cleaning'],lc:'1300 Demo Labor',sec:'1300 Demo',mats:[]}
+];
+
+function matchTaskToCSV(taskName){
+  var t=taskName.toLowerCase();
+  for(var i=0;i<TASK_CSV_MAP.length;i++){
+    var entry=TASK_CSV_MAP[i];
+    for(var j=0;j<entry.kws.length;j++){
+      if(t.indexOf(entry.kws[j])!==-1) return entry;
+    }
+  }
+  return null;
+}
+
+function escCsv(v){
+  if(v===null||v===undefined) return '';
+  var s=String(v);
+  if(s.indexOf(',')!==-1||s.indexOf('"')!==-1||s.indexOf('\n')!==-1){
+    return '"'+s.replace(/"/g,'""')+'"';
+  }
+  return s;
+}
+
+function exportContractorForeman(){
+  var keys=Object.keys(jobs);
+  if(keys.length===0){ alert('No jobs selected. Check off tasks on the Scope tab first.'); return; }
+  var addr=(document.getElementById('xAddr')||{}).value||'Unknown Property';
+  var prep=(document.getElementById('xPrep')||{}).value||'SF Maintenance';
+  var date=(document.getElementById('xDate')||{}).value||new Date().toISOString().slice(0,10);
+  var headers=['Section','Section Description','Item Name','Description','Quantity','Unit Cost $','Unit','Cost Code','Markup','Markup Type','Item Type','Is Taxable?','Is Optional?','Assigned To','Internal Note'];
+  var rows=[headers];
+  var grouped={};
+  keys.forEach(function(k){
+    var j=jobs[k];
+    var entry=matchTaskToCSV(j.task);
+    var lc=entry?entry.lc:'7100 Const Supply';
+    var sec=entry?entry.sec:'7100 Construction Supplies';
+    if(!grouped[lc]) grouped[lc]={sec:sec,jobs:[]};
+    grouped[lc].jobs.push({j:j,entry:entry});
+  });
+  Object.keys(grouped).sort().forEach(function(lc){
+    var grp=grouped[lc];
+    grp.jobs.forEach(function(item){
+      var j=item.j; var entry=item.entry;
+      var qty=j.qty||1; var meas=j.meas||qty;
+      var laborCost=Math.round(effH(j)*qty*RATE*100)/100;
+      rows.push([escCsv('100 Contracted Services'),escCsv(grp.sec),escCsv(lc+':'+j.task),escCsv(j.task+(j.notes?' | '+j.notes:'')),escCsv(qty),escCsv(laborCost.toFixed(2)),escCsv('EA'),escCsv(lc),escCsv('10'),escCsv('%'),escCsv('LBR'),escCsv('No'),escCsv('No'),escCsv(prep),escCsv('Rental Turn - '+addr+' - '+date)]);
+      if(entry&&entry.mats&&entry.mats.length>0){
+        entry.mats.forEach(function(mat){
+          var mUnit=mat[4]; var matQty=(mUnit==='sqft'||mUnit==='lnft')?meas:qty;
+          rows.push([escCsv(grp.sec),escCsv(grp.sec),escCsv(grp.sec+':'+mat[1]),escCsv(mat[1]+' for '+j.task),escCsv(matQty),escCsv(mat[2]),escCsv(mUnit),escCsv(mat[0]),escCsv('10'),escCsv('%'),escCsv('MTL'),escCsv('No'),escCsv('No'),escCsv(mat[3]),escCsv('Rental Turn - '+addr+' - '+date)]);
+        });
+      }
+    });
+  });
+  var csv=rows.map(function(r){return r.join(',');}).join('\r\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download='CF_'+addr.replace(/[^a-zA-Z0-9]/g,'_')+'_'+date+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  setTimeout(function(){
+    var subj='Contractor Foreman Upload - '+addr+' - '+date;
+    var body='Property: '+addr+'\nDate: '+date+'\nPrepared by: '+prep+'\n\nAttach the CSV file and upload to Contractor Foreman:\nhttps://app.contractorforeman.net\n\nImport: Budget > Import > Choose File > Upload';
+    window.location.href='mailto:?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
+  },1500);
+}
+
+// ═══════════════════════════════════════
+// JOB ARCHIVE SYSTEM
+// ═══════════════════════════════════════
+var ARCHIVE_KEY='sfScopeArchive_v1';
+
+function loadArchive(){
+  try{ var d=localStorage.getItem(ARCHIVE_KEY); return d?JSON.parse(d):[]; }
+  catch(e){ return []; }
+}
+
+function saveArchive(archive){
+  try{ localStorage.setItem(ARCHIVE_KEY,JSON.stringify(archive)); }
+  catch(e){ alert('WARNING: Archive storage full! Process existing jobs before saving more.'); }
+}
+
+function archiveCurrentJob(){
+  var keys=Object.keys(jobs);
+  if(keys.length===0){ alert('No tasks selected.'); return false; }
+  var addr=(document.getElementById('xAddr')||{}).value||'';
+  if(!addr){ alert('Please enter a property address before saving.'); return false; }
+  var prep=(document.getElementById('xPrep')||{}).value||'';
+  var date=(document.getElementById('xDate')||{}).value||new Date().toISOString().slice(0,10);
+  var archive=loadArchive();
+  archive.push({id:Date.now().toString(),addr:addr,prep:prep,date:date,jobs:JSON.parse(JSON.stringify(jobs)),savedAt:new Date().toISOString(),status:'pending'});
+  saveArchive(archive);
+  return true;
+}
+
+function deleteArchivedJob(id){
+  var archive=loadArchive().filter(function(e){return e.id!==id;});
+  saveArchive(archive); renderArchive();
+}
+
+function loadArchivedJob(id){
+  var archive=loadArchive();
+  var entry=archive.find(function(e){return e.id===id;});
+  if(!entry){ alert('Job not found.'); return; }
+  jobs=JSON.parse(JSON.stringify(entry.jobs)); save();
+  if(document.getElementById('xAddr')) document.getElementById('xAddr').value=entry.addr;
+  if(document.getElementById('xPrep')) document.getElementById('xPrep').value=entry.prep;
+  if(document.getElementById('xDate')) document.getElementById('xDate').value=entry.date;
+  buildScope(); updateBadge(); renderSum(); renderExp(); renderArchive();
+  goTab('Scope');
+  alert('Loaded: '+entry.addr+'\nGo to Export tab to process this job.');
+}
+
+function markJobProcessed(id){
+  var archive=loadArchive();
+  var entry=archive.find(function(e){return e.id===id;});
+  if(entry) entry.status='processed';
+  saveArchive(archive); renderArchive();
+}
+
+function confirmDeleteJob(id,addr){
+  if(!confirm('DELETE JOB\n\n'+addr+'\n\nHave you verified:\n- Email with CSV was sent\n- All PDFs were saved\n\nThis permanently removes the job from this device.\n\nTap OK to delete.')) return;
+  deleteArchivedJob(id);
+  alert('Deleted: '+addr);
+}
+
+function processArchivedJob(id){
+  var archive=loadArchive();
+  var entry=archive.find(function(e){return e.id===id;});
+  if(!entry){ alert('Job not found.'); return; }
+  if(!confirm('OFFICE USE ONLY\n\nProcess job for:\n'+entry.addr+'\n\nThis will generate:\n- Contractor Foreman CSV (download)\n- Email draft (attach CSV + send)\n- Full Scope PDF\n- Contractor Scope PDF\n- PO Cover Sheet PDF\n\nAfter processing, tap Confirm Delete to remove from device.\n\nContinue?')) return;
+  if(!confirm('CONFIRM - OFFICE USE ONLY\n\nAre you at the office with access to email?\n\nTap OK to generate all documents.')) return;
+  jobs=JSON.parse(JSON.stringify(entry.jobs));
+  if(document.getElementById('xAddr')) document.getElementById('xAddr').value=entry.addr;
+  if(document.getElementById('xPrep')) document.getElementById('xPrep').value=entry.prep;
+  if(document.getElementById('xDate')) document.getElementById('xDate').value=entry.date;
+  exportContractorForeman();
+  setTimeout(function(){
+    alert('Tap OK to open Full Scope PDF'); saveToFiles('full');
+    setTimeout(function(){
+      alert('Tap OK to open Contractor Scope PDF'); saveToFiles('contractor');
+      setTimeout(function(){
+        alert('Tap OK to open PO Cover Sheet PDF'); saveToFiles('po');
+        setTimeout(function(){
+          markJobProcessed(id);
+          alert('Done! All documents generated for:\n'+entry.addr+'\n\nVerify email sent and PDFs saved, then tap Confirm Delete.');
+        },800);
+      },500);
+    },500);
+  },2000);
+}
+
+function renderArchive(){
+  var el=document.getElementById('archiveList');
+  if(!el) return;
+  var archive=loadArchive();
+  if(archive.length===0){
+    el.innerHTML='<div style="text-align:center;color:#999;padding:20px;font-size:13px;">No saved jobs. Use Save &amp; New Job in the field.</div>';
+    return;
+  }
+  var html='<div>';
+  archive.forEach(function(entry){
+    var isPending=entry.status==='pending';
+    var cnt=Object.keys(entry.jobs).length;
+    var bg=isPending?'#fff8e1':'#e8f5e9';
+    var badge=isPending
+      ?'<span style="background:#f39c12;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:bold;">PENDING</span>'
+      :'<span style="background:#27ae60;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:bold;">PROCESSED</span>';
+    var ea=(entry.addr||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    html+='<div style="background:'+bg+';border:1px solid #ddd;border-radius:10px;padding:12px;margin-bottom:10px;">';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">';
+    html+='<div style="font-weight:bold;font-size:14px;color:#1F3864;">'+ea+'</div>'+badge;
+    html+='</div>';
+    html+='<div style="font-size:11px;color:#666;margin-bottom:8px;">'+entry.date+' - '+cnt+' tasks'+(entry.prep?' - '+entry.prep:'')+'</div>';
+    html+='<div class="ajobs" data-id="'+entry.id+'" data-addr="'+ea+'" data-pending="'+(isPending?'1':'0')+'" style="display:flex;gap:6px;flex-wrap:wrap;">';
+    if(isPending){
+      html+='<button data-act="proc" style="flex:2;background:#1a5c1a;color:#fff;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:bold;cursor:pointer;">Process at Office</button>';
+    } else {
+      html+='<button data-act="proc" style="flex:1;background:#7b3fa0;color:#fff;border:none;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;">Re-Process</button>';
+      html+='<button data-act="del" style="flex:1;background:#c0392b;color:#fff;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:bold;cursor:pointer;">Confirm Delete</button>';
+    }
+    html+='<button data-act="view" style="flex:1;background:#1a5276;color:#fff;border:none;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;">View</button>';
+    html+='</div></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+  el.querySelectorAll('.ajobs').forEach(function(row){
+    var id=row.getAttribute('data-id');
+    var addr=row.getAttribute('data-addr');
+    row.querySelectorAll('button[data-act]').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var act=btn.getAttribute('data-act');
+        if(act==='proc') processArchivedJob(id);
+        else if(act==='view') loadArchivedJob(id);
+        else if(act==='del') confirmDeleteJob(id,addr);
+      });
+    });
+  });
+}
+
 function buildScope(){
   var list = document.getElementById('scopeList');
   list.innerHTML = '';
@@ -2288,6 +2591,7 @@ function renderSum(){
 }
 
 // ── Export tab ────────────────────────────────────────────────────────────────
+  renderArchive();
 function renderExp(){
   var el=document.getElementById('expList'); el.innerHTML='';
   var keys=Object.keys(jobs); if(keys.length===0) return;
@@ -3361,44 +3665,42 @@ function saveAll3(){
 function saveEverything(){
   if(Object.keys(jobs).length===0){ alert('No jobs selected.'); return; }
   var addr=(document.getElementById('xAddr')||{}).value||'Property';
-  if(!confirm('SAVE EVERYTHING\n\nProperty: ' + addr + '\n\nThis will:\n1. Export JSON backup file\n2. Open email with backup data\n3. Open Full Scope PDF\n4. Open Contractor Scope PDF\n5. Open PO Cover Sheet PDF\n6. CLEAR ALL JOBS for next property\n\nMake sure you are ready before proceeding.\n\nContinue?')) return;
-  if(!confirm('CONFIRM: Clear jobs after saving?\n\nAfter all 3 documents open, jobs for ' + addr + ' will be permanently cleared.\n\nTap OK to proceed or Cancel to go back.')) return;
+  if(!confirm('OFFICE USE ONLY\n\nSave Everything for: '+addr+'\n\nThis will:\n1. Download Contractor Foreman CSV\n2. Open email draft\n3. Open Full Scope PDF\n4. Open Contractor Scope PDF\n5. Open PO Cover Sheet PDF\n6. PERMANENTLY DELETE all job data\n\nOnly do this at the office.\n\nContinue?')) return;
+  if(!confirm('FINAL CONFIRMATION\n\nAll job data for '+addr+' will be permanently deleted after documents are generated.\n\nTap OK to proceed.')) return;
   exportJobs();
+  exportContractorForeman();
   try{ emailJobs(); }catch(e){}
   setTimeout(function(){
-    alert('Tap OK to open Full Scope (pinch preview → Share → Save to Files)');
-    saveToFiles('full');
+    alert('Tap OK to open Full Scope PDF'); saveToFiles('full');
     setTimeout(function(){
-      alert('Tap OK to open Contractor Scope'); saveToFiles('contractor');
+      alert('Tap OK to open Contractor Scope PDF'); saveToFiles('contractor');
       setTimeout(function(){
-        alert('Tap OK to open PO Cover Sheet'); saveToFiles('po');
+        alert('Tap OK to open PO Cover Sheet PDF'); saveToFiles('po');
         setTimeout(function(){
           jobs={}; save(); buildScope(); updateBadge(); renderSum(); renderExp();
           if(document.getElementById('xAddr')) document.getElementById('xAddr').value='';
-          alert('Done! Ready for next property.');
+          renderArchive();
+          alert('Done! Verify email sent and PDFs saved.');
         },800);
       },500);
     },500);
-  },800);
+  },2000);
 }
 
 function saveAndNewJob(){
-  if(Object.keys(jobs).length===0){ alert('No jobs selected.'); return; }
-  if(!confirm('SAVE AND NEW JOB\n\nThis will open all 3 documents then CLEAR ALL JOBS for the next property.\n\nProperty: ' + ((document.getElementById('xAddr')||{}).value || 'current property') + '\n\nMake sure you are ready.\n\nContinue?')) return;
-  if(!confirm('CONFIRM: Are all documents saved?\n\nTap OK to open documents and clear jobs, or Cancel to go back.')) return;
-  alert('3 documents will open. For each:\n1. Pinch to zoom preview\n2. Share → Save to Files\n\nTap OK to begin.');
-  saveToFiles('full');
-  setTimeout(function(){
-    saveToFiles('contractor');
-    setTimeout(function(){
-      saveToFiles('po');
-      setTimeout(function(){
-        jobs={}; save(); buildScope(); updateBadge(); renderSum(); renderExp();
-        if(document.getElementById('xAddr')) document.getElementById('xAddr').value='';
-        alert('Done! Ready for next property.');
-      },800);
-    },500);
-  },500);
+  if(Object.keys(jobs).length===0){ alert('No tasks selected. Nothing to save.'); return; }
+  var addr=(document.getElementById('xAddr')||{}).value||'';
+  if(!addr){ alert('Please enter a property address before saving.'); return; }
+  if(!confirm('SAVE & NEW JOB\n\nSave job for: '+addr+'\n\nThis will archive the current job and clear the scope for the next property.\n\nDocuments are generated at the office — NOT now.\n\nContinue?')) return;
+  if(!confirm('CONFIRM\n\nJob will be saved to the archive on this iPad.\n\nTap OK to save and start fresh.')) return;
+  var saved=archiveCurrentJob();
+  if(!saved) return;
+  jobs={}; save(); buildScope(); updateBadge(); renderSum();
+  if(document.getElementById('xAddr')) document.getElementById('xAddr').value='';
+  if(document.getElementById('xPrep')) document.getElementById('xPrep').value='';
+  if(document.getElementById('xDate')) document.getElementById('xDate').value='';
+  renderArchive(); renderExp();
+  alert('Job saved: '+addr+'\n\nReady for next property.\n\nAt the office: go to Export tab > Saved Jobs > Process at Office.');
 }
 
 function buildPrintHtml(noCost){
@@ -3727,39 +4029,7 @@ function saveAll3(){
   }, 500);
 }
 
-function saveAndNewJob(){
-  if(Object.keys(jobs).length===0){
-    alert('No jobs selected. Check off jobs on the Scope tab first.');
-    return;
-  }
-  if(!confirm('This will save all 3 documents then clear jobs for a new property. Continue?')) return;
 
-  // Save the current property info before clearing
-  var oldAddr = (document.getElementById('xAddr')||{}).value || '';
-  var oldPrep = (document.getElementById('xPrep')||{}).value || '';
-
-  alert('3 documents will open. For each:\n1. Pinch to zoom the print preview\n2. Tap Share > Save to Files\n\nTap OK to begin.');
-  saveToFiles('full');
-  setTimeout(function(){
-    saveToFiles('contractor');
-    setTimeout(function(){
-      saveToFiles('po');
-      setTimeout(function(){
-        // Clear jobs and reset property fields
-        jobs = {};
-        save();
-        buildScope();
-        updateBadge();
-        renderSum();
-        renderExp();
-        // Clear address field for new job
-        if(document.getElementById('xAddr')) document.getElementById('xAddr').value = '';
-        // Keep preparer name
-        alert('Jobs cleared. Ready for next property!\nPrepared by: ' + (oldPrep||'—') + ' is kept.');
-      }, 800);
-    }, 500);
-  }, 500);
-}
 var BG = {
   "cap/seal well casing":{m:25.0,h:0.525},
   "pump/service septic tank":{m:350.0,h:0.0},
@@ -5293,48 +5563,9 @@ function saveAll3(){
     setTimeout(function(){ alert('Tap OK to open PO Cover Sheet.'); saveToFiles('po'); },500); },500);
 }
 
-function saveEverything(){
-  if(Object.keys(jobs).length===0){ alert('No jobs selected.'); return; }
-  var addr=(document.getElementById('xAddr')||{}).value||'Property';
-  if(!confirm('SAVE EVERYTHING\n\nProperty: ' + addr + '\n\nThis will:\n1. Export JSON backup file\n2. Open email with backup data\n3. Open Full Scope PDF\n4. Open Contractor Scope PDF\n5. Open PO Cover Sheet PDF\n6. CLEAR ALL JOBS for next property\n\nMake sure you are ready before proceeding.\n\nContinue?')) return;
-  if(!confirm('CONFIRM: Clear jobs after saving?\n\nAfter all 3 documents open, jobs for ' + addr + ' will be permanently cleared.\n\nTap OK to proceed or Cancel to go back.')) return;
-  exportJobs();
-  try{ emailJobs(); }catch(e){}
-  setTimeout(function(){
-    alert('Tap OK to open Full Scope (pinch preview → Share → Save to Files)');
-    saveToFiles('full');
-    setTimeout(function(){
-      alert('Tap OK to open Contractor Scope'); saveToFiles('contractor');
-      setTimeout(function(){
-        alert('Tap OK to open PO Cover Sheet'); saveToFiles('po');
-        setTimeout(function(){
-          jobs={}; save(); buildScope(); updateBadge(); renderSum(); renderExp();
-          if(document.getElementById('xAddr')) document.getElementById('xAddr').value='';
-          alert('Done! Ready for next property.');
-        },800);
-      },500);
-    },500);
-  },800);
-}
 
-function saveAndNewJob(){
-  if(Object.keys(jobs).length===0){ alert('No jobs selected.'); return; }
-  if(!confirm('SAVE AND NEW JOB\n\nThis will open all 3 documents then CLEAR ALL JOBS for the next property.\n\nProperty: ' + ((document.getElementById('xAddr')||{}).value || 'current property') + '\n\nMake sure you are ready.\n\nContinue?')) return;
-  if(!confirm('CONFIRM: Are all documents saved?\n\nTap OK to open documents and clear jobs, or Cancel to go back.')) return;
-  alert('3 documents will open. For each:\n1. Pinch to zoom preview\n2. Share → Save to Files\n\nTap OK to begin.');
-  saveToFiles('full');
-  setTimeout(function(){
-    saveToFiles('contractor');
-    setTimeout(function(){
-      saveToFiles('po');
-      setTimeout(function(){
-        jobs={}; save(); buildScope(); updateBadge(); renderSum(); renderExp();
-        if(document.getElementById('xAddr')) document.getElementById('xAddr').value='';
-        alert('Done! Ready for next property.');
-      },800);
-    },500);
-  },500);
-}
+
+
 
 function buildPrintHtml(noCost){
   var keys=Object.keys(jobs); var tM=0,tH=0;
@@ -5662,39 +5893,7 @@ function saveAll3(){
   }, 500);
 }
 
-function saveAndNewJob(){
-  if(Object.keys(jobs).length===0){
-    alert('No jobs selected. Check off jobs on the Scope tab first.');
-    return;
-  }
-  if(!confirm('This will save all 3 documents then clear jobs for a new property. Continue?')) return;
 
-  // Save the current property info before clearing
-  var oldAddr = (document.getElementById('xAddr')||{}).value || '';
-  var oldPrep = (document.getElementById('xPrep')||{}).value || '';
-
-  alert('3 documents will open. For each:\n1. Pinch to zoom the print preview\n2. Tap Share > Save to Files\n\nTap OK to begin.');
-  saveToFiles('full');
-  setTimeout(function(){
-    saveToFiles('contractor');
-    setTimeout(function(){
-      saveToFiles('po');
-      setTimeout(function(){
-        // Clear jobs and reset property fields
-        jobs = {};
-        save();
-        buildScope();
-        updateBadge();
-        renderSum();
-        renderExp();
-        // Clear address field for new job
-        if(document.getElementById('xAddr')) document.getElementById('xAddr').value = '';
-        // Keep preparer name
-        alert('Jobs cleared. Ready for next property!\nPrepared by: ' + (oldPrep||'—') + ' is kept.');
-      }, 800);
-    }, 500);
-  }, 500);
-}
 
 </script>
 </body>
