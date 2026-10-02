@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SF Scope Creator v15.4</title>
+<title>SF Scope Creator v15.5</title>
 <style>
 :root{
   --brand:#1B2B3A;--accent:#C85A2A;--accent2:#E8A87C;
@@ -439,7 +439,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 <div class="hdr">
   <div class="hdr-brand">
     <div class="hdr-title">Stone <em>Fortress</em></div>
-    <div class="hdr-sub">Rental Turn Scope &nbsp;v15.4</div>
+    <div class="hdr-sub">Rental Turn Scope &nbsp;v15.5</div>
   </div>
   <div class="hdr-right">
     <div class="rate-wrap">
@@ -2196,6 +2196,7 @@ function sendAllDocuments(){
     +'@media print{body{margin:0;padding:0;}@page{margin:0.5in;}.page-break{page-break-before:always;}}'
     +'h2{color:#1F3864;border-bottom:2px solid #B08D57;padding-bottom:6px;margin-top:0;}'
     +'</style></head><body>'
+    +'<div style="background:#fff3cd;border:2px solid #B08D57;border-radius:6px;padding:12px 16px;margin-bottom:20px;font-family:Arial,sans-serif;">'+'<div style="font-size:13px;font-weight:bold;color:#1F3864;margin-bottom:6px;">&#9888;&nbsp; PROJECT MANAGER: REVIEW MATERIAL LINE ITEMS BEFORE ORDERING</div>'+'<div style="font-size:11px;color:#444;">After uploading the CSV to Contractor Foreman, open the project budget and review every <strong>MTL</strong> (material) line item before approving for procurement. Verify: correct SKU and product for this specific job &mdash; correct size, style, and finish &mdash; correct quantity matches field measurements &mdash; correct vendor. The app pre-selects the most common SKU per task; field conditions may require a different item. Do not send to procurement until all MTL lines are confirmed.</div>'+'</div>'
     +'<h2>Full Scope (with costs) — '+addr+'</h2>'+buildPrintHtml(false)
     +'<div class="page-break"><h2>Contractor Scope (no costs) — '+addr+'</h2></div>'+buildPrintHtml(true)
     +'<div class="page-break"><h2>PO Cover Sheet — '+addr+'</h2></div>'+buildPOHtml()
@@ -2251,7 +2252,7 @@ function sendAllDocuments(){
   if(navigator.canShare&&navigator.canShare({files:[htmlFile,csvFile]})){
     navigator.share({
       title:'Rental Turn Scope — '+addr,
-      text:'Scope docs + CF CSV for '+addr+' ('+date+'). Open HTML in Safari and print to PDF.',
+      text:'Scope docs + CF CSV for '+addr+' ('+date+').'+'\n\n'        +'NEXT STEPS:\n'        +'1. Open the HTML file in Safari → Print → Save as PDF\n'        +'2. Upload CSV to Contractor Foreman (desktop browser only)\n'        +'3. REVIEW ALL MTL LINE ITEMS before approving for procurement\n'        +'   Verify: correct SKU, size, finish, quantity, and vendor for each material item.',
       files:[htmlFile,csvFile]
     }).catch(function(err){
       if(err.name!=='AbortError') _sendFallback(combinedHtml,safe,csv,csvName);
