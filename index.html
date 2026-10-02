@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>SF Scope Creator v15.1</title>
+<title>SF Scope Creator v15.2</title>
 <style>
 :root{
   --brand:#1B2B3A;--accent:#C85A2A;--accent2:#E8A87C;
@@ -439,7 +439,7 @@ body{display:flex;flex-direction:column;max-width:430px;margin:0 auto;
 <div class="hdr">
   <div class="hdr-brand">
     <div class="hdr-title">Stone <em>Fortress</em></div>
-    <div class="hdr-sub">Rental Turn Scope &nbsp;v15.1</div>
+    <div class="hdr-sub">Rental Turn Scope &nbsp;v15.2</div>
   </div>
   <div class="hdr-right">
     <div class="rate-wrap">
@@ -2376,7 +2376,7 @@ function toggleJob(section, task, cb, row){
     if(sc) sc.textContent = cnt > 0 ? cnt + ' job' + (cnt===1?'':'s') + ' selected' : 'Tap to expand';
   }
   updateBadge();
-  save();
+  debounceSave();
 }
 
 function clearAll(){
@@ -4080,166 +4080,7 @@ function getTaskSubsection(task){
 }
 
 
-function buildScope(){
-  var list = document.getElementById('scopeList');
-  list.innerHTML = '';
-  SECTIONS.forEach(function(sec){
-    var card = document.createElement('div');
-    card.className = 'sec-card';
-    card.id = 'scard-' + sec.n;
 
-    var hdr = document.createElement('div');
-    hdr.className = 'sec-hdr';
-    hdr.innerHTML = '<div class="sec-icon">' + sec.i + '</div>' + '<div class="sec-info"><div class="sec-name">' + sec.n + '</div>' + '<div class="sec-count" id="scnt-' + sec.n + '">Tap to expand</div></div>' + '<span class="sec-bdg" id="sb-' + sec.n + '">0</span>' + '<div class="sec-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>';
-    hdr.addEventListener('click', function(){ card.classList.toggle('open'); });
-
-    var body = document.createElement('div');
-    body.className = 'sec-body';
-
-    var sr = document.createElement('div');
-    sr.className = 'room-srch';
-    var si = document.createElement('input');
-    si.type = 'text';
-    si.placeholder = 'Filter ' + sec.n + '…';
-    var nm = document.createElement('div');
-    nm.className = 'no-match';
-    nm.id = 'nm-' + sec.n;
-    nm.textContent = 'No matching jobs';
-    si.addEventListener('click', function(e){ e.stopPropagation(); });
-    si.addEventListener('input', function(){
-      var q = si.value.toLowerCase();
-      var any = false;
-      card.querySelectorAll('.task-row').forEach(function(r){
-        var show = !q || r.getAttribute('data-task').toLowerCase().indexOf(q) !== -1;
-        r.style.display = show ? '' : 'none';
-        if(show) any = true;
-      });
-      nm.style.display = (!any && q) ? 'block' : 'none';
-    });
-    sr.appendChild(si);
-    body.appendChild(sr);
-    body.appendChild(nm);
-
-    var seen = {};
-    // Group tasks by subsection
-    var grouped_tasks = {};
-    sec.t.forEach(function(task) {
-      if(seen[task]) return; seen[task] = true;
-      var sub = getTaskSubsection(task);
-      if(!grouped_tasks[sub]) grouped_tasks[sub] = [];
-      grouped_tasks[sub].push(task);
-    });
-    // Render in subsection order
-    SUBSECTION_ORDER.forEach(function(subName) {
-      var tasks = grouped_tasks[subName];
-      if(!tasks || tasks.length === 0) return;
-      // Count selected in this subsection
-      var selCount = tasks.filter(function(t){ return jobs[jKey(sec.n,t)]; }).length;
-
-      // Collapsible subsection header
-      var subHdr = document.createElement('div');
-      subHdr.className = 'subsec-hdr collapsed';
-
-      var subTitle = document.createElement('span');
-      subTitle.className = 'subsec-title';
-      subTitle.textContent = subName;
-
-      var subBadge = document.createElement('span');
-      subBadge.className = 'subsec-badge';
-      subBadge.id = 'sub-bdg-' + sec.n + '-' + subName.replace(/[^a-z0-9]/gi,'_');
-      subBadge.style.display = selCount > 0 ? 'inline-block' : 'none';
-      if(selCount > 0) subBadge.textContent = selCount;
-
-      var subChev = document.createElement('span');
-      subChev.className = 'subsec-chev';
-      subChev.innerHTML = '&#8250;';
-
-      subHdr.appendChild(subTitle);
-      subHdr.appendChild(subBadge);
-      subHdr.appendChild(subChev);
-
-      // Task container — hidden by default
-      var taskContainer = document.createElement('div');
-      taskContainer.className = 'subsec-tasks';
-      taskContainer.style.display = 'none';
-
-      // Reminder note
-      if(SUBSEC_REMINDERS[subName]){
-        var reminderEl = document.createElement('div');
-        reminderEl.className = 'subsec-reminder';
-        reminderEl.textContent = SUBSEC_REMINDERS[subName];
-        taskContainer.appendChild(reminderEl);
-      }
-
-      // Toggle on tap
-      subHdr.addEventListener('click', function(e){
-        e.stopPropagation();
-        var open = !subHdr.classList.contains('collapsed');
-        if(open){
-          subHdr.classList.add('collapsed');
-          taskContainer.style.display = 'none';
-          subChev.innerHTML = '&#8250;';
-        } else {
-          subHdr.classList.remove('collapsed');
-          taskContainer.style.display = 'block';
-          subChev.innerHTML = '&#8964;';
-        }
-      });
-
-      body.appendChild(subHdr);
-      tasks.forEach(function(task) {
-        var key = jKey(sec.n, task);
-        var row = document.createElement('div');
-        row.className = 'task-row' + (jobs[key] ? ' sel' : '');
-        row.setAttribute('data-task', task);
-        row.id = 'tr-' + key;
-        var cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.id = 'cb-' + key;
-        if(jobs[key]) { cb.checked = true; row.classList.add('sel'); }
-        cb.addEventListener('change', function(e) { e.stopPropagation(); toggleJob(sec.n, task, cb, row); });
-        var lbl = document.createElement('label');
-        lbl.htmlFor = 'cb-' + key;
-        lbl.textContent = task;
-        var editBtn = document.createElement('button');
-        editBtn.type = 'button';
-        editBtn.className = 'edit-btn';
-        editBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit';
-        (function(s,t){ editBtn.addEventListener('click', function(e){ e.stopPropagation(); openSheet(s,t); }); })(sec.n, task);
-        row.appendChild(cb);
-        row.appendChild(lbl);
-        row.appendChild(editBtn);
-        // Update badge on check/uncheck
-        (function(tc, sb){
-          cb.addEventListener('change', function(){
-            var cnt = tc.querySelectorAll('.task-row.sel').length;
-            sb.textContent = cnt;
-            sb.style.display = cnt > 0 ? 'inline-block' : 'none';
-          });
-        })(taskContainer, subBadge);
-        taskContainer.appendChild(row);
-      });
-      body.appendChild(taskContainer);
-    });
-
-    // Auto-expand subsections with already-checked tasks
-    setTimeout(function(){
-      card.querySelectorAll('.subsec-hdr').forEach(function(sh){
-        var tc = sh.nextElementSibling;
-        if(tc && tc.querySelectorAll && tc.querySelectorAll('.task-row.sel').length > 0){
-          sh.classList.remove('collapsed');
-          tc.style.display = 'block';
-          var chev = sh.querySelector('.subsec-chev');
-          if(chev) chev.innerHTML = '&#8964;';
-        }
-      });
-    }, 50);
-
-    card.appendChild(hdr);
-    card.appendChild(body);
-    list.appendChild(card);
-  });
-}
 
 function globalSearch(q){
   var lq = q.toLowerCase();
